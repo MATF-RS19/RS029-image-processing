@@ -3,7 +3,7 @@ CXXFLAGS = -std=c++17 -I include
 LDLIBS  = -lstdc++fs `pkg-config opencv --cflags --libs`
 WFLAGS = -Wall -Wextra -O3
 
-sobel: src/sobel.cpp
+canny: src/canny.cpp
 	$(CXX) -o $@ $^ $(CXXFLAGS) $(WFLAGS) $(LDLIBS) 
 
 distortion: src/distortion.cpp
@@ -16,4 +16,4 @@ pca: src/pca.cpp
 .PHONY: clean
 
 clean:
-	rm -rf pca distortion
+	rm -rf pca distortion canny
