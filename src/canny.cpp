@@ -25,14 +25,14 @@ int main()
 
 	for (int i = 0; i < rows-3; i++) {
 		for (int j = 0; j < columns-3; j++) {
-			std::vector<int> current;
+			std::vector<float> current;
 			for (int x = 0; x < 5; x++) {
 				for (int y = 0; y < 5; y++) {
 					current.push_back(img(i+x, j+y));
 				}
 			}
 
-			int s = std::inner_product(gauss.cbegin(), gauss.cend(), current.cbegin(), 0);
+			int s = std::inner_product(gauss.cbegin(), gauss.cend(), current.cbegin(), 0.0);
 
 			img(i+2, j+2) = s;
 		}
@@ -61,9 +61,9 @@ int main()
 			if (magnitude[i][j] < upper_threshold) continue;
 
 			if (angles[i][j] > 112.5 && angles[i][j] <= 157.5) {
-				// 135 deg
-				if (magnitude[i][j] <= magnitude[i-1][j-1]) continue;
-				if (magnitude[i][j] <= magnitude[i+1][j+1]) continue;
+				// 135 deg (careful here! angles go in negative direction)
+				if (magnitude[i][j] <= magnitude[i-1][j+1]) continue;
+				if (magnitude[i][j] <= magnitude[i+1][j-1]) continue;
 			}
 			else if (angles[i][j] > 67.5 && angles[i][j] <= 112.5) {
 				// 90 deg (horizontal line)
@@ -72,8 +72,8 @@ int main()
 			}
 			else if (angles[i][j] > 22.5 && angles[i][j] <= 67.5) {
 				// 45 deg
-				if (magnitude[i][j] <= magnitude[i-1][j+1]) continue;
-				if (magnitude[i][j] <= magnitude[i+1][j-1]) continue;
+				if (magnitude[i][j] <= magnitude[i-1][j-1]) continue;
+				if (magnitude[i][j] <= magnitude[i+1][j+1]) continue;
 			}
 			else {
 				// 0 deg (vertical line)
@@ -94,10 +94,10 @@ int main()
 				if (edges(i,j) == 254) {
 					edges(i,j) = 255;
 
-					if (angles[i][j] > 112.5 && angles[i][j] <= 157.5) {
-						// 135 deg
+					if (angles[i][j] > 22.5 && angles[i][j] <= 67.5) {
+						// 45 deg
 						if (edges(i-1, j+1) == 0 && magnitude[i-1][j+1] > lower_threshold) {
-							if (angles[i-1][j+1] > 112.5 && angles[i-1][j+1] <= 157.5) {
+							if (angles[i-1][j+1] > 22.5 && angles[i-1][j+1] <= 67.5) {
 								if (i-2<=0 || magnitude[i-1][j+1] > magnitude[i-2][j]) {
 									if (j+2>=columns || magnitude[i-1][j+1] > magnitude[i][j+2]) {
 										edges(i-1,j+1)=254;
@@ -107,10 +107,9 @@ int main()
 							}
 						}
 
-
 						if (edges(i+1, j-1) == 0 && magnitude[i+1][j-1] > lower_threshold) {
-							if (angles[i+1][j-1] > 112.5 && angles[i+1][j-1] <= 157.5) {
-								if (i+2 >= columns || magnitude[i+1][j-1] > magnitude[i+2][j]) {
+							if (angles[i+1][j-1] > 22.5 && angles[i+1][j-1] <= 67.5) {
+								if (i+2 >= rows || magnitude[i+1][j-1] > magnitude[i+2][j]) {
 									if (j-2 <= 0 || magnitude[i+1][j-1] > magnitude[i][j-2]) {
 										edges(i+1,j-1)=254;
 										change = true;
@@ -118,7 +117,7 @@ int main()
 								}
 							}
 						}
-					} // end of 135
+					} // end of 45
 
 
 					if (angles[i][j] > 67.5 && angles[i][j] <= 112.5) {
@@ -148,10 +147,10 @@ int main()
 					} // end of 90
 
 
-					if (angles[i][j] > 22.5 && angles[i][j] <= 67.5) {
-						// 45 deg
+					if (angles[i][j] > 112.5 && angles[i][j] <= 157.5) {
+						// 135 deg
 						if (edges(i-1, j-1) == 0 && magnitude[i-1][j-1] > lower_threshold) {
-							if (angles[i-1][j-1] > 22.5 && angles[i-1][j-1] <= 67.5) {
+							if (angles[i-1][j-1] > 112.5 && angles[i-1][j-1] <= 157.5) {
 								if (i-2<=0 || magnitude[i-1][j-1] > magnitude[i-2][j]) {
 									if (j-2<=0 || magnitude[i-1][j-1] > magnitude[i][j-2]) {
 										edges(i-1,j-1)=254;
@@ -162,7 +161,7 @@ int main()
 						}
 
 						if (edges(i+1, j+1) == 0 && magnitude[i+1][j+1] > lower_threshold) {
-							if (angles[i+1][j+1] > 22.5 && angles[i+1][j+1] <= 67.5) {
+							if (angles[i+1][j+1] > 112.5 && angles[i+1][j+1] <= 157.5) {
 								if (i+2 >= rows || magnitude[i+1][j+1] > magnitude[i+2][j]) {
 									if (j+2 >= columns || magnitude[i+1][j+1] > magnitude[i][j+2]) {
 										edges(i+1,j+1)=254;
@@ -171,12 +170,12 @@ int main()
 								}
 							}
 						}
-					} // end of 45
+					} // end of 135
 
-					if (angles[i][j] <= 22.5) {
+					if (angles[i][j] <= 22.5 || angles[i][j] >= 157.5) {
 						// 0 deg (vertical line)
 						if (edges(i+1, j) == 0 && magnitude[i+1][j] > lower_threshold) {
-							if (angles[i+1][j] <= 22.5) {
+							if (angles[i+1][j] <= 22.5 || angles[i+1][j] >= 157.5) {
 								if (magnitude[i+1][j] > magnitude[i+1][j-1]) {
 									if (magnitude[i+1][j] > magnitude[i+1][j+1]) {
 										edges(i+1,j)=254;
@@ -187,7 +186,7 @@ int main()
 						}
 
 						if (edges(i-1, j) == 0 && magnitude[i-1][j] > lower_threshold) {
-							if (angles[i-1][j] <= 22.5) {
+							if (angles[i-1][j] <= 22.5 || angles[i-1][j] >= 157.5) {
 								if (magnitude[i-1][j] > magnitude[i-1][j-1]) {
 									if (magnitude[i-1][j] > magnitude[i-1][j+1]) {
 										edges(i-1,j)=254;
