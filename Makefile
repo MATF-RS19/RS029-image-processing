@@ -3,6 +3,9 @@ CXXFLAGS = -std=c++17 -I include
 LDLIBS  = -lstdc++fs `pkg-config opencv --cflags --libs`
 WFLAGS = -Wall -Wextra -O3
 
+sobel: src/sobel.cpp
+	$(CXX) -o $@ $^ $(CXXFLAGS) $(WFLAGS) $(LDLIBS) 
+
 distortion: src/distortion.cpp
 	$(CXX) -o $@ $^ $(CXXFLAGS) $(WFLAGS) $(LDLIBS) 
 
