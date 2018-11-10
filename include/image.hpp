@@ -32,12 +32,22 @@ namespace img {
 			return !m_data.empty();
 		}
 
-		unsigned rows() const
+		bool in_range(int x, int y) const
+		{
+			return x >= 0 && x < (int)rows() && y >= 0 && y < (int)cols();
+		}
+
+		std::pair<int, int> dimension() const
+		{
+			return {rows(), cols()};
+		}
+
+		int rows() const
 		{
 			return m_data.rows;
 		}
 
-		unsigned cols() const
+		int cols() const
 		{
 			return m_data.cols;
 		}
@@ -219,8 +229,8 @@ namespace img {
 	{
 		img::Image<img::Type::GRAYSCALE> gray(rows(), cols());
 
-		for (unsigned i = 0; i < rows(); i++) {
-			for (unsigned j = 0; j < cols(); j++) {
+		for (int i = 0; i < rows(); i++) {
+			for (int j = 0; j < cols(); j++) {
 				gray(i, j) = std::round(0.299*(*this)(i, j)[R] + 0.587*(*this)(i, j)[G] + 0.114*(*this)(i, j)[B]);
 			}
 		}
@@ -235,8 +245,8 @@ namespace img {
 
 		double threshold = (double)std::accumulate(cbegin(), cend(), 0) / (rows()*cols());
 
-		for (unsigned i = 0; i < rows(); i++) {
-			for (unsigned j = 0; j < cols(); j++) {
+		for (int i = 0; i < rows(); i++) {
+			for (int j = 0; j < cols(); j++) {
 				result(i, j) = (pixel_sum(i, j) < threshold) ? Color::BLACK : Color::WHITE;
 			}
 		}
