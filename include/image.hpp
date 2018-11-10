@@ -4,7 +4,7 @@
 #include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/highgui/highgui.hpp>
 #include <iostream>
-#include <filesystem>
+#include <experimental/filesystem>
 #include <numeric>
 
 
@@ -21,7 +21,7 @@ namespace img {
 		cv::Mat m_data;
 
 	public:
-		Image(const std::filesystem::path& path);
+		Image(const std::experimental::filesystem::path& path);
 		Image(unsigned rows = 0, unsigned cols = 0);
 		Image(const cv::Mat& data)
 			: m_data(data)
@@ -89,7 +89,7 @@ namespace img {
 		std::conditional_t<t==Type::RGB, cv::Vec3b, unsigned char>& operator()(unsigned i, unsigned j);
 		const std::conditional_t<t==Type::RGB, cv::Vec3b, unsigned char>& operator()(unsigned i, unsigned j) const;
 
-		void save(const std::filesystem::path& path) const
+		void save(const std::experimental::filesystem::path& path) const
 		{
 			imwrite(path.string(), m_data);
 		}
@@ -105,13 +105,13 @@ namespace img {
 	};
 
 	template <>
-	Image<Type::RGB>::Image(const std::filesystem::path& path)
+	Image<Type::RGB>::Image(const std::experimental::filesystem::path& path)
 		: m_name(path.filename()), m_data(cv::imread(path.string(), cv::IMREAD_COLOR))
 	{
 	}
 
 	template <>
-	Image<Type::GRAYSCALE>::Image(const std::filesystem::path& path)
+	Image<Type::GRAYSCALE>::Image(const std::experimental::filesystem::path& path)
 		: m_name(path.filename()), m_data(cv::imread(path.string(), cv::IMREAD_GRAYSCALE))
 	{
 	}
