@@ -2,8 +2,12 @@
 #include <vector>
 #include <numeric>
 #include <stack>
+
+static const int ALMOST_WHITE = 254;
+
 static const double pi = 3.14159265358979323846;
 
+// Check two pixels that belong to the parallel lines below and above the line of a pixel (i,j). If magnitude of pixel (i,j) is greater than the magnitude of those two pixels return true.
 static bool is_maximum(int i, int j, const std::vector<std::vector<float>>&  magnitude, const std::vector<std::vector<float>>& angles)
 {
 	int angle = angles[i][j];
@@ -32,7 +36,11 @@ static bool is_maximum(int i, int j, const std::vector<std::vector<float>>&  mag
 	return (magnitude[i][j] > magnitude[n1.first][n1.second]) && (magnitude[i][j] > magnitude[n2.first][n2.second]);
 }
 
-bool changed(img::Image<img::Type::GRAYSCALE>& edges, int i, int j, const std::vector<std::vector<float>>& magnitude, const std::vector<std::vector<float>>& angles, int lower_threshold)
+// Check the two pixels in the direction of the edge (ie, perpendicular to the gradient direction). If the following conditions are satisfied mark them as an edge and return true:
+// Have the direction same as the central pixel
+// Gradient magnitude is greater than the lower threshold
+// They are the maximum compared to their neighbors (nonmaximum suppression for these pixels)
+static bool check_neighbours(img::Image<img::Type::GRAYSCALE>& output, int i, int j, const std::vector<std::vector<float>>& magnitude, const std::vector<std::vector<float>>& angles, int lower_threshold)
 {
 	int angle = angles[i][j];
 	std::pair<int, int> n1, n2;
@@ -59,28 +67,28 @@ bool changed(img::Image<img::Type::GRAYSCALE>& edges, int i, int j, const std::v
 
 	bool ind = false;
 
-	if (edges(n1.first, n1.second) == 0 && magnitude[n1.first][n1.second] > lower_threshold) {
+	if (output(n1.first, n1.second) == 0 && magnitude[n1.first][n1.second] > lower_threshold) {
 		if (angles[n1.first][n1.second] == angle) {
 			if (is_maximum(n1.first, n1.second, magnitude, angles)) {
-				edges(n1.first, n1.second)= 254;
+				output(n1.first, n1.second)= ALMOST_WHITE;
 				ind = true;
 			}
 		}
 	}
 
-	if (edges(n2.first, n2.second) == 0 && magnitude[n2.first][n2.second] > lower_threshold) {
+	if (output(n2.first, n2.second) == 0 && magnitude[n2.first][n2.second] > lower_threshold) {
 		if (angles[n2.first][n2.second] == angle) {
 			if (is_maximum(n2.first, n2.second, magnitude, angles)) {
-				edges(n2.first, n2.second)= 254;
+				output(n2.first, n2.second)= ALMOST_WHITE;
 				ind = true;
 			}
 		}
 	}
-
 
 	return ind;
 }
 
+// 5x5 gaussian filter with standard deviation 1.4
 static void gaussian_blur(img::Image<img::Type::GRAYSCALE>& img)
 {
 	std::vector<float> gauss
@@ -90,11 +98,12 @@ static void gaussian_blur(img::Image<img::Type::GRAYSCALE>& img)
 		4.0/159, 9.0/159, 12.0/159, 9.0/159, 4.0/159,
 		2.0/159, 4.0/159, 5.0/159, 4.0/159, 2.0/159};
 
-	for (int i = 0; i < img.rows()-4; i++) {
-		for (int j = 0; j < img.cols()-4; j++) {
+	for (int i = 0; i < img.rows()-4; ++i) {
+		for (int j = 0; j < img.cols()-4; ++j) {
 			std::vector<float> current;
-			for (int x = 0; x < 5; x++) {
-				for (int y = 0; y < 5; y++) {
+			current.reserve(25);
+			for (int x = 0; x < 5; ++x) {
+				for (int y = 0; y < 5; ++y) {
 					current.push_back(img(i+x, j+y));
 				}
 			}
@@ -106,6 +115,7 @@ static void gaussian_blur(img::Image<img::Type::GRAYSCALE>& img)
 	}
 }
 
+// Get gradient directions and magnitude.
 static std::pair<std::vector<std::vector<float>>, std::vector<std::vector<float>>> sobel_operator(const img::Image<img::Type::GRAYSCALE>& img)
 {
 	std::vector<std::vector<float>> magnitude(img.rows(), std::vector<float>(img.cols(), 0));
@@ -113,8 +123,8 @@ static std::pair<std::vector<std::vector<float>>, std::vector<std::vector<float>
 	std::vector<int> GX{-1, 0, 1, -2, 0, 2, -1, 0, 1};
 	std::vector<int> GY{-1, -2, -1, 0, 0, 0, 1, 2, 1};
 
-	for (int i = 0; i < img.rows()-2; i++) {
-		for (int j = 0; j < img.cols()-2; j++) {
+	for (int i = 0; i < img.rows()-2; ++i) {
+		for (int j = 0; j < img.cols()-2; ++j) {
 			std::vector<int> current{img(i,j), img(i,j+1), img(i,j+2), img(i+1,j), img(i+1,j+1), img(i+1,j+2), img(i+2,j), img(i+2,j+1), img(i+2,j+2)};
 
 			int sx = std::inner_product(GX.cbegin(), GX.cend(), current.cbegin(), 0);
@@ -138,58 +148,65 @@ static std::pair<std::vector<std::vector<float>>, std::vector<std::vector<float>
 	return {magnitude, angles};
 }
 
-static void nonmaximum_supression(img::Image<img::Type::GRAYSCALE>& edges, const std::vector<std::vector<float>>& magnitude, const std::vector<std::vector<float>>& angles, int upper_threshold)
+// mark pixels as edges (ALMOST_WHITE) if they satisfy conditions
+static void nonmaximum_supression(img::Image<img::Type::GRAYSCALE>& output, const std::vector<std::vector<float>>& magnitude, const std::vector<std::vector<float>>& angles, int upper_threshold)
 {
-	for (int i = 1; i < edges.rows()-1; i++) {
-		for (int j = 1; j < edges.cols()-1; j++) {
-			edges(i,j) = 0;
-			if (magnitude[i][j] < upper_threshold) continue;
-			if (!is_maximum(i,j,magnitude,angles)) continue;
-			edges(i,j) = 254;
+	for (int i = 1; i < output.rows()-1; ++i) {
+		for (int j = 1; j < output.cols()-1; ++j) {
+			output(i, j) = (magnitude[i][j] >= upper_threshold && is_maximum(i,j,magnitude,angles)) ? ALMOST_WHITE : img::BLACK;
 		}
 	}
+	// remark: we start from 1 because is_maximum access neighbours (+1, -1) and we don't want to check indices (it is faster)
 }
 
-int main()
+// "grow" lines
+static void hysteresis(img::Image<img::Type::GRAYSCALE>& output, const std::vector<std::vector<float>>&  magnitude, const std::vector<std::vector<float>>& angles, int lower_threshold)
 {
-	clock_t tStart = clock();
-	for (int k = 0; k < 1; k++) {
-		// img::Image<img::Type::GRAYSCALE> img("images/mat.jpg");
-		img::Image<img::Type::GRAYSCALE> img("images/sobel.png");
-		int rows = img.rows();
-		int columns = img.cols();
-		img::Image<img::Type::GRAYSCALE> edges(rows, columns);
+	bool change = true;
 
-		int upper_threshold = 60;
-		int lower_threshold = 20;
+	while (change) {
+		change = false;
 
-		gaussian_blur(img);
+		for (int i = 2; i < output.rows()-2; ++i) {
+			for (int j = 2; j < output.cols()-2; ++j) {
+				// if pixel is marked as an edge
+				if (output(i,j) == ALMOST_WHITE) {
 
-		auto [magnitude, angles] = sobel_operator(img);
-
-		nonmaximum_supression(edges, magnitude, angles, upper_threshold);
-
-		bool change = true;
-		while (change) {
-			change = false;
-
-			for (int i = 2; i < rows-2; i++) {
-				for (int j = 2; j < columns-2; j++) {
-					if (edges(i,j) == 254) {
-						edges(i,j) = 255;
-
-						bool tmp = changed(edges, i, j,  magnitude,  angles, lower_threshold);
-						if (change == false)
-							change = tmp;
-					}
+					// we definitely color marked pixel so we wouldn't check it any more
+					output(i,j) = img::WHITE;
+					
+					// try to mark neighbours as edge
+					change |= check_neighbours(output, i, j, magnitude, angles, lower_threshold);
 				}
 			}
 		}
-		edges.show();
-		cv::waitKey(0);
-		edges.save("canny_output.png");
+		// remark: we start from 2 because check_neighbours access neighbours (+2, -2) and we don't want to check indices (it is faster)
 	}
-    printf("Time taken: %.2fs\n", (double)(clock() - tStart)/CLOCKS_PER_SEC);
+}
+
+img::Image<img::Type::GRAYSCALE> canny(img::Image<img::Type::GRAYSCALE> img, int lower_threshold = 20, int upper_threshold = 60)
+{
+	// get rid of a noise
+	gaussian_blur(img);
+
+	auto [magnitude, angles] = sobel_operator(img);
+	nonmaximum_supression(img, magnitude, angles, upper_threshold);
+	hysteresis(img, magnitude, angles, lower_threshold);
+
+	return img;
+}
+
+
+int main()
+{
+	img::Image<img::Type::GRAYSCALE> img("images/sobel.png");
+	if (!img) return -1;
+
+	auto output = canny(img);
+
+	output.show();
+	cv::waitKey(0);
+	output.save("canny_output.png");
 
     return 0;
 }

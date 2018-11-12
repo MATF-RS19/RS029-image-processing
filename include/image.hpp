@@ -27,6 +27,10 @@ namespace img {
 			: m_data(data)
 		{}
 
+		Image(const Image& other)
+			: m_name(other.m_name), m_data(other.m_data.clone())
+		{}
+
 		operator bool() const
 		{
 			return !m_data.empty();
