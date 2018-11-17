@@ -1,83 +1,19 @@
 #include "image.hpp"
 #include <iostream>
 #include <cmath>
+#include <thread>
+#include <mutex>
 
-int main()
+
+static float m = 2;
+static std::mutex mu; 
+
+void set_picture(const std::vector<std::vector<float>>& m1, const std::vector<std::vector<float>>& m2,
+		img::Image<img::Type::GRAYSCALE>& img, int from, int to)
 {
-	// img::Image<img::Type::GRAYSCALE> img("images/r2d2.jpg");
-	// img::Image<img::Type::GRAYSCALE> img("images/blackboard.jpg");
-	img::Image<img::Type::GRAYSCALE> img("images/storm_trooper.jpg");
-	// img::Image<img::Type::GRAYSCALE> img("images/text.png");
-	auto [rows, cols] = img.dimension();
-
-	img::Image<img::Type::GRAYSCALE> binary(rows, cols);
-
-	std::vector<std::vector<float>> m1(rows, std::vector<float>(cols, 0));
-	std::vector<std::vector<float>> m2(rows, std::vector<float>(cols, 0));
-
-	for (int i = 0; i < rows; i++) {
-		for (int j = 0; j < cols; j++) {
-			m1[i][j] = img(i,j)/255.0;
-			m2[i][j] = 1 - m1[i][j];
-		}
-	}
-
-
-	double m = 2;
-
-	float sum_u = 0;
-	int iter=0;
-
-	do {
-		iter++;
-		float C1 = 0;
-		float m1_sum = 0;
-
-		for (int i = 0; i < rows; i++) {
-			for (int j = 0; j < cols; j++) {
-				float x = std::pow(m1[i][j], m);
-				C1 += x*img(i,j);
-				m1_sum += x;
-			}
-		}
-		C1 /= m1_sum;
-
-		float C2=0;
-		float m2_sum = 0;
-
-		for (int i = 0; i < rows; i++) {
-			for (int j = 0; j < cols; j++) {
-				float x = std::pow(m2[i][j], m);
-				C2 += x*img(i,j);
-				m2_sum += x;
-			}
-		}
-		C2 /= m2_sum;
-
-		sum_u = 0;
-		for (int i = 0; i < rows; i++) {
-			for (int j = 0; j < cols; j++) {
-				float d1=(C1-img(i,j))*(C1-img(i,j));
-				float d2=(C2-img(i,j))*(C2-img(i,j));
-				float d_sq1 = 1.0/d1;
-				float d_sq2 = 1.0/d2;
-				float a = std::pow(d_sq1, 1.0/(m-1));
-				float b = std::pow(d_sq2, 1.0/(m-1));
-				sum_u += std::pow(m1[i][j]-a/(a+b),2) + std::pow(m2[i][j]-b/(a+b),2);
-
-				m1[i][j] = a/(a+b);
-				m2[i][j] = b/(a+b);
-			}
-		}
-
-	} while(sum_u>1);
-
-	std::cout << "iterations: " << iter << std::endl;
-
-
-	for (int i = 0; i < rows; i++) {
-		for (int j = 0; j < cols; j++) {
-			binary(i,j) = (m1[i][j]>m2[i][j]) ? img::WHITE : img::BLACK;
+	for (int i = from; i < to; i++) {
+		for (int j = 0; j < img.cols(); j++) {
+			img(i,j) = (m1[i][j]>m2[i][j]) ? img::WHITE : img::BLACK;
 			// if (m1[i][j]>0.9) {
 			// 	binary(i,j)=img::WHITE;
 			// }
@@ -103,6 +39,176 @@ int main()
 			// }
 		}
 	}
+}
+
+void init_m(std::vector<std::vector<float>>& m1, std::vector<std::vector<float>>& m2,
+		const img::Image<img::Type::GRAYSCALE>& img, int from, int to)
+{
+	for (int i = from; i < to; i++) {
+		for (int j = 0; j < img.cols(); j++) {
+			m1[i][j] = img(i,j)/255.0;
+			m2[i][j] = 1 - m1[i][j];
+		}
+	}
+}
+
+
+void centroids(float& C1, float& C2, float& m1_sum, float& m2_sum,
+		const std::vector<std::vector<float>>& m1, const std::vector<std::vector<float>>& m2,
+		const img::Image<img::Type::GRAYSCALE>& img, int from, int to)
+{
+	float m1_sum_tmp = 0;
+	float m2_sum_tmp = 0;
+	float C1_tmp = 0;
+	float C2_tmp = 0;
+
+	for (int i = from; i < to; i++) {
+		for (int j = 0; j < img.cols(); j++) {
+			float x = std::pow(m1[i][j], m);
+			C1_tmp += x*img(i,j);
+			m1_sum_tmp += x;
+
+			x = std::pow(m2[i][j], m);
+			C2_tmp += x*img(i,j);
+			m2_sum_tmp += x;
+		}
+	}
+
+	std::lock_guard<std::mutex> lock(mu);
+	C1 += C1_tmp;
+	C2 += C2_tmp;
+	m1_sum += m1_sum_tmp;
+	m2_sum += m2_sum_tmp;
+}
+
+void update_m(float& sum_u, 
+		std::vector<std::vector<float>>& m1, std::vector<std::vector<float>>& m2,
+		float C1, float C2, const img::Image<img::Type::GRAYSCALE>& img, int from, int to)
+{
+	float sum_u_tmp = 0;
+
+	for (int i = from; i < to; i++) {
+		for (int j = 0; j < img.cols(); j++) {
+			float d1=(C1-img(i,j))*(C1-img(i,j));
+			float d2=(C2-img(i,j))*(C2-img(i,j));
+			float d_sq1 = 1.0/d1;
+			float d_sq2 = 1.0/d2;
+			float a = std::pow(d_sq1, 1.0/(m-1));
+			float b = std::pow(d_sq2, 1.0/(m-1));
+			sum_u_tmp += std::pow(m1[i][j]-a/(a+b),2) + std::pow(m2[i][j]-b/(a+b),2);
+
+			m1[i][j] = a/(a+b);
+			m2[i][j] = b/(a+b);
+		}
+	}
+
+	std::lock_guard<std::mutex> lock(mu);
+	sum_u += sum_u_tmp;
+}
+
+int main()
+{
+	// img::Image<img::Type::GRAYSCALE> img("images/r2d2.jpg");
+	// img::Image<img::Type::GRAYSCALE> img("images/blackboard.jpg");
+	img::Image<img::Type::GRAYSCALE> img("images/storm_trooper.jpg");
+	// img::Image<img::Type::GRAYSCALE> img("images/mat.jpg");
+	auto [rows, cols] = img.dimension();
+
+	img::Image<img::Type::GRAYSCALE> binary(rows, cols);
+
+	std::vector<std::vector<float>> m1(rows, std::vector<float>(cols, 0));
+	std::vector<std::vector<float>> m2(rows, std::vector<float>(cols, 0));
+
+	int num_threads = 8;
+	std::vector<std::thread> threads(num_threads);
+	for (int i = 0; i < num_threads; i++) {
+		int from = rows/num_threads * i;
+		int to = (i==num_threads-1) ? rows : from + rows/num_threads;
+		threads[i] = std::thread(init_m, std::ref(m1), std::ref(m2), std::ref(img), from, to);
+	}
+
+	for (int i = 0; i < num_threads; i++) {
+		threads[i].join();
+	}
+
+
+	float sum_u = 0;
+	int iter=0;
+
+
+	do {
+		iter++;
+
+		float C1 = 0;
+		float C2 = 0;
+		float m1_sum = 0;
+		float m2_sum = 0;
+
+		for (int i = 0; i < num_threads; i++) {
+			int from = rows/num_threads * i;
+			int to = (i==num_threads-1) ? rows : from + rows/num_threads;
+			threads[i] = std::thread(centroids, std::ref(C1), std::ref(C2),
+									std::ref(m1_sum), std::ref(m2_sum),
+									std::ref(m1), std::ref(m2), std::ref(img), from, to);
+		}
+
+		for (int i = 0; i < num_threads; i++) {
+			threads[i].join();
+		}
+
+		C1 /= m1_sum;
+		C2 /= m2_sum;
+
+
+		sum_u = 0;
+
+		for (int i = 0; i < num_threads; i++) {
+			int from = rows/num_threads * i;
+			int to = (i==num_threads-1) ? rows : from + rows/num_threads;
+			threads[i] = std::thread(update_m,  std::ref(sum_u),
+									std::ref(m1), std::ref(m2),
+									C1, C2,
+									 std::ref(img), from, to);
+		}
+
+		for (int i = 0; i < num_threads; i++) {
+			threads[i].join();
+		}
+
+		// sum_u = 0;
+		// for (int i = 0; i < rows; i++) {
+		// 	for (int j = 0; j < cols; j++) {
+		// 		float d1=(C1-img(i,j))*(C1-img(i,j));
+		// 		float d2=(C2-img(i,j))*(C2-img(i,j));
+		// 		float d_sq1 = 1.0/d1;
+		// 		float d_sq2 = 1.0/d2;
+		// 		float a = std::pow(d_sq1, 1.0/(m-1));
+		// 		float b = std::pow(d_sq2, 1.0/(m-1));
+		// 		sum_u += std::pow(m1[i][j]-a/(a+b),2) + std::pow(m2[i][j]-b/(a+b),2);
+
+		// 		m1[i][j] = a/(a+b);
+		// 		m2[i][j] = b/(a+b);
+		// 	}
+		// }
+
+	} while(sum_u>1);
+
+	// note: we can get different results for iteration, centroids etc , that's because threads calculate values in arbitrary order and we have more digits than float allows, so it is rounded, and thus order does matter! Difference is not significant. We can fix this with boost arbitrary precision float number, but it is slower and this is not very important.
+	std::cout << "iterations: " << iter << std::endl;
+
+	for (int i = 0; i < num_threads; i++) {
+		int from = rows/num_threads * i;
+		int to = (i==num_threads-1) ? rows : from + rows/num_threads;
+		threads[i] = std::thread(set_picture,  
+								std::ref(m1), std::ref(m2),
+								 std::ref(binary), from, to);
+	}
+
+	for (int i = 0; i < num_threads; i++) {
+		threads[i].join();
+	}
+
+
 
 	binary.show();
 	cv::waitKey(0);
