@@ -4,7 +4,6 @@
 #include <thread>
 #include <mutex>
 
-
 static float m = 2;
 static std::mutex mu; 
 
@@ -53,18 +52,18 @@ void init_m(std::vector<std::vector<float>>& m1, std::vector<std::vector<float>>
 }
 
 
-void centroids(float& C1, float& C2, float& m1_sum, float& m2_sum,
+void centroids(double& C1, double& C2, double& m1_sum, double& m2_sum,
 		const std::vector<std::vector<float>>& m1, const std::vector<std::vector<float>>& m2,
 		const img::Image<img::Type::GRAYSCALE>& img, int from, int to)
 {
-	float m1_sum_tmp = 0;
-	float m2_sum_tmp = 0;
-	float C1_tmp = 0;
-	float C2_tmp = 0;
+	double m1_sum_tmp = 0;
+	double m2_sum_tmp = 0;
+	double C1_tmp = 0;
+	double C2_tmp = 0;
 
 	for (int i = from; i < to; i++) {
 		for (int j = 0; j < img.cols(); j++) {
-			float x = std::pow(m1[i][j], m);
+			double x = std::pow(m1[i][j], m);
 			C1_tmp += x*img(i,j);
 			m1_sum_tmp += x;
 
@@ -81,16 +80,16 @@ void centroids(float& C1, float& C2, float& m1_sum, float& m2_sum,
 	m2_sum += m2_sum_tmp;
 }
 
-void update_m(float& sum_u, 
+void update_m(double& sum_u, 
 		std::vector<std::vector<float>>& m1, std::vector<std::vector<float>>& m2,
-		float C1, float C2, const img::Image<img::Type::GRAYSCALE>& img, int from, int to)
+		double C1, double C2, const img::Image<img::Type::GRAYSCALE>& img, int from, int to)
 {
-	float sum_u_tmp = 0;
+	double sum_u_tmp = 0;
 
 	for (int i = from; i < to; i++) {
 		for (int j = 0; j < img.cols(); j++) {
-			float d1=(C1-img(i,j))*(C1-img(i,j));
-			float d2=(C2-img(i,j))*(C2-img(i,j));
+			float d1=((C1-img(i,j))*(C1-img(i,j)));
+			float d2=((C2-img(i,j))*(C2-img(i,j)));
 			float d_sq1 = 1.0/d1;
 			float d_sq2 = 1.0/d2;
 			float a = std::pow(d_sq1, 1.0/(m-1));
@@ -119,7 +118,7 @@ int main()
 	std::vector<std::vector<float>> m1(rows, std::vector<float>(cols, 0));
 	std::vector<std::vector<float>> m2(rows, std::vector<float>(cols, 0));
 
-	int num_threads = 8;
+	int num_threads = 4;
 	std::vector<std::thread> threads(num_threads);
 	for (int i = 0; i < num_threads; i++) {
 		int from = rows/num_threads * i;
@@ -132,17 +131,17 @@ int main()
 	}
 
 
-	float sum_u = 0;
+	double sum_u = 0;
 	int iter=0;
 
 
 	do {
 		iter++;
 
-		float C1 = 0;
-		float C2 = 0;
-		float m1_sum = 0;
-		float m2_sum = 0;
+		double C1 = 0;
+		double C2 = 0;
+		double m1_sum = 0;
+		double m2_sum = 0;
 
 		for (int i = 0; i < num_threads; i++) {
 			int from = rows/num_threads * i;
@@ -159,7 +158,6 @@ int main()
 		C1 /= m1_sum;
 		C2 /= m2_sum;
 
-
 		sum_u = 0;
 
 		for (int i = 0; i < num_threads; i++) {
@@ -175,25 +173,10 @@ int main()
 			threads[i].join();
 		}
 
-		// sum_u = 0;
-		// for (int i = 0; i < rows; i++) {
-		// 	for (int j = 0; j < cols; j++) {
-		// 		float d1=(C1-img(i,j))*(C1-img(i,j));
-		// 		float d2=(C2-img(i,j))*(C2-img(i,j));
-		// 		float d_sq1 = 1.0/d1;
-		// 		float d_sq2 = 1.0/d2;
-		// 		float a = std::pow(d_sq1, 1.0/(m-1));
-		// 		float b = std::pow(d_sq2, 1.0/(m-1));
-		// 		sum_u += std::pow(m1[i][j]-a/(a+b),2) + std::pow(m2[i][j]-b/(a+b),2);
-
-		// 		m1[i][j] = a/(a+b);
-		// 		m2[i][j] = b/(a+b);
-		// 	}
-		// }
-
+		if (iter > 30) break;
+		// std::cout << C1 << std::endl;
 	} while(sum_u>1);
 
-	// note: we can get different results for iteration, centroids etc , that's because threads calculate values in arbitrary order and we have more digits than float allows, so it is rounded, and thus order does matter! Difference is not significant. We can fix this with boost arbitrary precision float number, but it is slower and this is not very important.
 	std::cout << "iterations: " << iter << std::endl;
 
 	for (int i = 0; i < num_threads; i++) {
@@ -207,8 +190,6 @@ int main()
 	for (int i = 0; i < num_threads; i++) {
 		threads[i].join();
 	}
-
-
 
 	binary.show();
 	cv::waitKey(0);
