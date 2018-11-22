@@ -1,4 +1,6 @@
-#include "image.hpp"
+#include "binarization.h"
+//#include "image.hpp"
+#include <vector>
 #include <iostream>
 #include <cmath>
 #include <thread>
@@ -105,12 +107,8 @@ void update_m(double& sum_u,
 	sum_u += sum_u_tmp;
 }
 
-int main()
+img::Image<img::Type::GRAYSCALE> binarization(const img::Image<img::Type::GRAYSCALE>& img)
 {
-	// img::Image<img::Type::GRAYSCALE> img("images/r2d2.jpg");
-	// img::Image<img::Type::GRAYSCALE> img("images/blackboard.jpg");
-	// img::Image<img::Type::GRAYSCALE> img("images/storm_trooper.jpg");
-	img::Image<img::Type::GRAYSCALE> img("images/mat.jpg");
 	auto [rows, cols] = img.dimension();
 
 	img::Image<img::Type::GRAYSCALE> binary(rows, cols);
@@ -191,9 +189,5 @@ int main()
 		threads[i].join();
 	}
 
-	binary.show();
-	cv::waitKey(0);
-	binary.save("binary_output.png");
-
-    return 0;
+    return binary;
 }
