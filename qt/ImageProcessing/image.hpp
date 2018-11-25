@@ -18,14 +18,18 @@ namespace img {
 	class Image {
 	private:
 		std::string m_name;
+        cv::Mat m_data;
 
 	public:
-        cv::Mat m_data;
         Image(const std::experimental::filesystem::path& path);
 		Image(unsigned rows = 0, unsigned cols = 0);
 		Image(const cv::Mat& data)
 			: m_data(data)
-		{}
+        {}
+
+        Image(cv::Mat&& data)
+            : m_data(std::move(data))
+        {}
 
 		Image(const Image& other)
 			: m_name(other.m_name), m_data(other.m_data.clone())
@@ -36,9 +40,26 @@ namespace img {
 			return !m_data.empty();
 		}
 
+        void bgr2rgb();
+
+        uchar* data() const
+        {
+            return m_data.data;
+        }
+
+        img::Type type() const
+        {
+            return t;
+        }
+
+        int step() const
+        {
+            return m_data.step;
+        }
+
 		bool in_range(int x, int y) const
 		{
-			return x >= 0 && x < (int)rows() && y >= 0 && y < (int)cols();
+            return x >= 0 && x < rows() && y >= 0 && y < cols();
 		}
 
 		std::pair<int, int> dimension() const
@@ -73,18 +94,18 @@ namespace img {
 			return cols()/(double)rows();
 		}
 
-		Image<t> resize(int width, int height) const
+        Image<t> resize(int width, int height) const
 		{
-			cv::Size size(width, height);
 			cv::Mat dst;
-			cv::resize(m_data, dst, size);
-			return Image<t>(dst);
+            cv::resize(m_data, dst, cv::Size(width, height));
+            return Image<t>(std::move(dst));
 		}
 
-		Image<t> resize(int width) const
-		{
-			return resize(width, width/get_aspect_ratio());
-		}
+        Image<t> resize(int width) const
+        {
+            return resize(width, width/get_aspect_ratio());
+        }
+
 
 		Image<t> resize(const Image& image) const
 		{
