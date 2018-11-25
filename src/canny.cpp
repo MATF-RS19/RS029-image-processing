@@ -199,7 +199,8 @@ img::Image<img::Type::GRAYSCALE> canny(img::Image<img::Type::GRAYSCALE> img, int
 
 int main()
 {
-	img::Image<img::Type::GRAYSCALE> img("images/sobel.png");
+	img::Image<img::Type::GRAYSCALE> img("images/blackboard.jpg");
+	// img::Image<img::Type::GRAYSCALE> img("images/sobel.png");
 	if (!img) return -1;
 
 	auto output = canny(img);
