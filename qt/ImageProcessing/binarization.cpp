@@ -111,7 +111,7 @@ img::Image<img::Type::GRAYSCALE> binarization(const img::Image<img::Type::GRAYSC
 {
 	auto [rows, cols] = img.dimension();
 
-	img::Image<img::Type::GRAYSCALE> binary(rows, cols);
+    img::Image<img::Type::GRAYSCALE> binary(rows, cols);
 
 	std::vector<std::vector<float>> m1(rows, std::vector<float>(cols, 0));
 	std::vector<std::vector<float>> m2(rows, std::vector<float>(cols, 0));

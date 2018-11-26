@@ -20,14 +20,14 @@ Image<Type::GRAYSCALE>::Image(const std::experimental::filesystem::path& path)
 }
 
 template <>
-Image<Type::RGB>::Image(unsigned rows, unsigned cols)
-    : m_data(cv::Mat(rows, cols, CV_8UC3, cv::Scalar(Color::WHITE, Color::WHITE, Color::WHITE)))
+Image<Type::RGB>::Image(unsigned rows, unsigned cols, std::string name)
+    : m_data(cv::Mat(rows, cols, CV_8UC3, cv::Scalar(Color::WHITE, Color::WHITE, Color::WHITE))), m_name(std::move(name))
 {
 }
 
 template <>
-Image<Type::GRAYSCALE>::Image(unsigned rows, unsigned cols)
-    : m_data(cv::Mat(rows, cols, CV_8UC1, cv::Scalar(Color::WHITE)))
+Image<Type::GRAYSCALE>::Image(unsigned rows, unsigned cols, std::string name)
+    : m_data(cv::Mat(rows, cols, CV_8UC1, cv::Scalar(Color::WHITE))), m_name(std::move(name))
 {
 }
 

@@ -23,6 +23,8 @@ private slots:
 
     void on_binarizeButton_clicked();
 
+    void on_saveImageButton_clicked();
+
 private:
     Ui::MainWindow *ui;
 };

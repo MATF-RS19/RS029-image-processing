@@ -5,6 +5,11 @@
 #include <QFileDialog>
 
 static img::Image<img::Type::RGB> im;
+static img::Image<img::Type::RGB> im_rgb_transformed;
+static img::Image<img::Type::GRAYSCALE> im_gray_transformed;
+enum class At { GRAYSCALE, RGB, NONE };
+static At active_type = At::NONE;
+
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -53,19 +58,32 @@ void MainWindow::display_image(const auto& image)
 
 void MainWindow::on_openImageButton_clicked()
 {
-    if (!im) {
-        QString image_path = QFileDialog::getOpenFileName(this, ("Open File"),  QDir::currentPath(), ("Images (*.png *.xpm *.jpg)"));
-
-        im =  img::Image<img::Type::RGB>(image_path.toStdString());
-    }
+    QString image_path = QFileDialog::getOpenFileName(this,  ("Open File"), QDir::currentPath(), ("Images (*.png *.xpm *.jpg)"));
+    im =  img::Image<img::Type::RGB>(image_path.toStdString());
 
     display_image(im);
+
+    active_type = At::NONE;
 }
 
 void MainWindow::on_binarizeButton_clicked()
 {
     if (im) {
-        auto im_binarized = binarization(im.grayscale());
-        display_image(im_binarized);
+        im_gray_transformed = binarization(im.grayscale());
+        im_gray_transformed.set_name(im.purename()+"_binarized.png");
+        display_image(im_gray_transformed);
+        active_type = At::GRAYSCALE;
+    }
+}
+
+void MainWindow::on_saveImageButton_clicked()
+{
+    if (active_type == At::GRAYSCALE && im_gray_transformed) {
+        QString save_path = QFileDialog::getSaveFileName(this, ("Save File"), im_gray_transformed.name().c_str(), ("Images (*.png *.xpm *.jpg)"));
+        im_gray_transformed.save(save_path.toStdString());
+    }
+    else if (active_type == At::RGB && im_rgb_transformed) {
+        QString save_path = QFileDialog::getSaveFileName(this, ("Save File"), im_rgb_transformed.name().c_str(), ("Images (*.png *.xpm *.jpg)"));
+        im_rgb_transformed.save(save_path.toStdString());
     }
 }

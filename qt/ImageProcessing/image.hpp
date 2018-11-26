@@ -6,6 +6,7 @@
 #include <iostream>
 #include <experimental/filesystem>
 #include <numeric>
+#include <string>
 
 
 namespace img {
@@ -22,7 +23,7 @@ namespace img {
 
 	public:
         Image(const std::experimental::filesystem::path& path);
-		Image(unsigned rows = 0, unsigned cols = 0);
+        Image(unsigned rows = 0, unsigned cols = 0, std::string name = "");
 		Image(const cv::Mat& data)
 			: m_data(data)
         {}
@@ -31,9 +32,30 @@ namespace img {
             : m_data(std::move(data))
         {}
 
-		Image(const Image& other)
-			: m_name(other.m_name), m_data(other.m_data.clone())
-		{}
+        Image(const Image& other)
+            : m_name(other.m_name), m_data(other.m_data.clone())
+        {}
+
+        // we need this because we have defined copy constructor
+        Image(Image&& other) = default;
+        Image& operator=(const Image& other) = default;
+        Image& operator=(Image&& other) = default;
+
+        std::string name() const
+        {
+            return m_name;
+        }
+
+        std::string purename() const
+        {
+            return std::string(m_name.cbegin(),
+                               std::find(m_name.cbegin(), m_name.cend(), '.'));
+        }
+
+        void set_name(std::string name)
+        {
+            m_name = std::move(name);
+        }
 
 		operator bool() const
 		{
@@ -126,7 +148,8 @@ namespace img {
 
 		void save(const std::experimental::filesystem::path& path) const
 		{
-			imwrite(path.string(), m_data);
+            if (!path.empty())
+                imwrite(path.string(), m_data);
 		}
 
 		std::conditional_t<t==Type::RGB, cv::MatIterator_<cv::Vec3b>, cv::MatIterator_<unsigned char>> begin();
