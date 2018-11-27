@@ -29,12 +29,14 @@ SOURCES += \
         main.cpp \
         mainwindow.cpp \
     image.cpp \
-    binarization.cpp
+    binarization.cpp \
+    canny.cpp
 
 HEADERS += \
         mainwindow.h \
     image.hpp \
-    binarization.h
+    canny.hpp \
+    binarization.hpp
 
 FORMS += \
         mainwindow.ui

@@ -1,5 +1,4 @@
-#include "binarization.h"
-//#include "image.hpp"
+#include "binarization.hpp"
 #include <vector>
 #include <iostream>
 #include <cmath>

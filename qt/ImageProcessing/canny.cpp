@@ -1,4 +1,4 @@
-#include "image.hpp"
+#include "canny.hpp"
 #include <vector>
 #include <numeric>
 #include <stack>
@@ -156,7 +156,7 @@ static void nonmaximum_supression(img::Image<img::Type::GRAYSCALE>& output, cons
 			output(i, j) = (magnitude[i][j] >= upper_threshold && is_maximum(i,j,magnitude,angles)) ? ALMOST_WHITE : img::BLACK;
 		}
 	}
-	// remark: we start from 1 because is_maximum access neighbours (+1, -1) and we don't want to check indices (it is faster)
+    // remark: we start from 1 because is_maximum access neighbours (+1, -1) and we don't want to check indices (it is faster) - FIX that with some var
 }
 
 // "grow" lines
@@ -180,11 +180,11 @@ static void hysteresis(img::Image<img::Type::GRAYSCALE>& output, const std::vect
 				}
 			}
 		}
-		// remark: we start from 2 because check_neighbours access neighbours (+2, -2) and we don't want to check indices (it is faster)
+        // remark: we start from 2 because check_neighbours access neighbours (+2, -2) and we don't want to check indices (it is faster) - FIX that with some var
 	}
 }
 
-img::Image<img::Type::GRAYSCALE> canny(img::Image<img::Type::GRAYSCALE> img, int lower_threshold = 20, int upper_threshold = 60)
+img::Image<img::Type::GRAYSCALE> canny(img::Image<img::Type::GRAYSCALE> img, int lower_threshold, int upper_threshold)
 {
 	// get rid of a noise
 	gaussian_blur(img);
@@ -196,17 +196,3 @@ img::Image<img::Type::GRAYSCALE> canny(img::Image<img::Type::GRAYSCALE> img, int
 	return img;
 }
 
-
-int main()
-{
-	img::Image<img::Type::GRAYSCALE> img("images/sobel.png");
-	if (!img) return -1;
-
-	auto output = canny(img);
-
-	output.show();
-	cv::waitKey(0);
-	output.save("canny_output.png");
-
-    return 0;
-}

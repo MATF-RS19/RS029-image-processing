@@ -79,7 +79,7 @@
      <item row="0" column="0" colspan="2">
       <widget class="QToolBox" name="toolBox">
        <property name="currentIndex">
-        <number>0</number>
+        <number>2</number>
        </property>
        <widget class="QWidget" name="page">
         <property name="geometry">
@@ -132,7 +132,7 @@
          </item>
         </layout>
        </widget>
-       <widget class="QWidget" name="page_2">
+       <widget class="QWidget" name="EdgeDetection">
         <property name="geometry">
          <rect>
           <x>0</x>
@@ -146,16 +146,19 @@
         </attribute>
         <layout class="QVBoxLayout" name="verticalLayout_4">
          <item>
-          <widget class="QSlider" name="horizontalSlider">
+          <widget class="QSlider" name="cannySlider">
+           <property name="maximum">
+            <number>50</number>
+           </property>
            <property name="orientation">
             <enum>Qt::Horizontal</enum>
            </property>
           </widget>
          </item>
          <item>
-          <widget class="QPushButton" name="pushButton_4">
+          <widget class="QPushButton" name="cannyButton">
            <property name="text">
-            <string>PushButton</string>
+            <string>Canny</string>
            </property>
           </widget>
          </item>

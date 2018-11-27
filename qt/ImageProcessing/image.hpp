@@ -119,7 +119,7 @@ namespace img {
         Image<t> resize(int width, int height) const
 		{
 			cv::Mat dst;
-            cv::resize(m_data, dst, cv::Size(width, height));
+            cv::resize(m_data, dst, cv::Size(width, height), 0, 0, cv::INTER_AREA);
             return Image<t>(std::move(dst));
 		}
 

@@ -1,6 +1,7 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
-#include "binarization.h"
+#include "binarization.hpp"
+#include "canny.hpp"
 #include "image.hpp"
 #include "boost/variant.hpp"
 #include <QFileDialog>
@@ -80,4 +81,35 @@ void MainWindow::on_saveImageButton_clicked()
         QString save_path = QFileDialog::getSaveFileName(this, ("Save File"), i.name().c_str(), ("Images (*.png *.xpm *.jpg)"));
         i.save(save_path.toStdString());
     }, im_transformed);
+}
+
+void MainWindow::on_cannyButton_clicked()
+{
+    if (im) {
+        auto im_canny = canny(im.grayscale());
+        im_canny.set_name(im.purename()+"_canny.png");
+        display_image(im_canny);
+
+        im_transformed = std::move(im_canny);
+
+        ui->cannySlider->setValue(10);
+    }
+}
+
+void MainWindow::on_cannySlider_sliderReleased()
+{
+    if (im) {
+        int lower = ui->cannySlider->value();
+        auto im_canny = canny(im.grayscale(), lower, 3*lower);
+        im_canny.set_name(im.purename()+"_canny.png");
+        display_image(im_canny);
+
+        im_transformed = std::move(im_canny);
+    }
+}
+
+
+void MainWindow::on_toolBox_currentChanged(int index)
+{
+    ui->cannySlider->setValue(0);
 }

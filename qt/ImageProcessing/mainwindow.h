@@ -26,6 +26,12 @@ private slots:
 
     void on_saveImageButton_clicked();
 
+    void on_cannyButton_clicked();
+
+    void on_cannySlider_sliderReleased();
+
+    void on_toolBox_currentChanged(int index);
+
 private:
     Ui::MainWindow *ui;
 
