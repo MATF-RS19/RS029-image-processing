@@ -3,6 +3,7 @@
 
 #include <QMainWindow>
 #include "image.hpp"
+#include "boost/variant.hpp"
 
 namespace Ui {
 class MainWindow;
@@ -27,6 +28,12 @@ private slots:
 
 private:
     Ui::MainWindow *ui;
+
+    // input image
+    img::Image<img::Type::RGB> im;
+    // transformed image
+    boost::variant<img::Image<img::Type::RGB>, img::Image<img::Type::GRAYSCALE>> im_transformed;
+
 };
 
 #endif // MAINWINDOW_H

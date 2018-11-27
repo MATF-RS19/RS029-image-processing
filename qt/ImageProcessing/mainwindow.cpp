@@ -2,14 +2,8 @@
 #include "ui_mainwindow.h"
 #include "binarization.h"
 #include "image.hpp"
+#include "boost/variant.hpp"
 #include <QFileDialog>
-
-static img::Image<img::Type::RGB> im;
-static img::Image<img::Type::RGB> im_rgb_transformed;
-static img::Image<img::Type::GRAYSCALE> im_gray_transformed;
-enum class At { GRAYSCALE, RGB, NONE };
-static At active_type = At::NONE;
-
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -59,31 +53,31 @@ void MainWindow::display_image(const auto& image)
 void MainWindow::on_openImageButton_clicked()
 {
     QString image_path = QFileDialog::getOpenFileName(this,  ("Open File"), QDir::currentPath(), ("Images (*.png *.xpm *.jpg)"));
-    im =  img::Image<img::Type::RGB>(image_path.toStdString());
 
+    im = img::Image<img::Type::RGB>(image_path.toStdString());
     display_image(im);
 
-    active_type = At::NONE;
+    // clear transformed image
+    im_transformed = img::Image<>{};
 }
+
 
 void MainWindow::on_binarizeButton_clicked()
 {
     if (im) {
-        im_gray_transformed = binarization(im.grayscale());
-        im_gray_transformed.set_name(im.purename()+"_binarized.png");
-        display_image(im_gray_transformed);
-        active_type = At::GRAYSCALE;
+        auto im_binarized = binarization(im.grayscale());
+        im_binarized.set_name(im.purename()+"_binarized.png");
+        display_image(im_binarized);
+
+        im_transformed = std::move(im_binarized);
     }
 }
 
 void MainWindow::on_saveImageButton_clicked()
 {
-    if (active_type == At::GRAYSCALE && im_gray_transformed) {
-        QString save_path = QFileDialog::getSaveFileName(this, ("Save File"), im_gray_transformed.name().c_str(), ("Images (*.png *.xpm *.jpg)"));
-        im_gray_transformed.save(save_path.toStdString());
-    }
-    else if (active_type == At::RGB && im_rgb_transformed) {
-        QString save_path = QFileDialog::getSaveFileName(this, ("Save File"), im_rgb_transformed.name().c_str(), ("Images (*.png *.xpm *.jpg)"));
-        im_rgb_transformed.save(save_path.toStdString());
-    }
+    boost::apply_visitor([this](auto&& i) {
+        if (!i) return;
+        QString save_path = QFileDialog::getSaveFileName(this, ("Save File"), i.name().c_str(), ("Images (*.png *.xpm *.jpg)"));
+        i.save(save_path.toStdString());
+    }, im_transformed);
 }

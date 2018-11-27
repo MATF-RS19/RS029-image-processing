@@ -148,7 +148,7 @@ namespace img {
 
 		void save(const std::experimental::filesystem::path& path) const
 		{
-            if (!path.empty())
+            if (!path.empty() && !m_data.empty())
                 imwrite(path.string(), m_data);
 		}
 

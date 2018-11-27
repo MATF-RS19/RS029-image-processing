@@ -90,17 +90,21 @@ void update_m(double& sum_u,
 
 	for (int i = from; i < to; i++) {
 		for (int j = 0; j < img.cols(); j++) {
-			float d1=((C1-img(i,j))*(C1-img(i,j)));
-			float d2=((C2-img(i,j))*(C2-img(i,j)));
-			float d_sq1 = 1.0/d1;
+            float d1=(C1-img(i,j))*(C1-img(i,j));
+            float d2=(C2-img(i,j))*(C2-img(i,j));
+            float d_sq1 = 1.0/d1;
 			float d_sq2 = 1.0/d2;
 			float a = std::pow(d_sq1, 1.0/(m-1));
 			float b = std::pow(d_sq2, 1.0/(m-1));
-			sum_u_tmp += std::pow(m1[i][j]-a/(a+b),2) + std::pow(m2[i][j]-b/(a+b),2);
+            if (std::abs(d1)<0.0001)
+                a = 100000000;
+            if (std::abs(d2)<0.0001)
+                b = 100000000;
+            sum_u_tmp += std::pow(m1[i][j]-a/(a+b),2) + std::pow(m2[i][j]-b/(a+b),2);
 
 			m1[i][j] = a/(a+b);
 			m2[i][j] = b/(a+b);
-		}
+        }
 	}
 
 	std::lock_guard<std::mutex> lock(mu);
@@ -172,8 +176,7 @@ img::Image<img::Type::GRAYSCALE> binarization(const img::Image<img::Type::GRAYSC
 		}
 
 		if (iter > 30) break;
-		// std::cout << C1 << std::endl;
-	} while(sum_u>1);
+    } while(sum_u > 1);
 
 	std::cout << "iterations: " << iter << std::endl;
 
