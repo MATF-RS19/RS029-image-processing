@@ -136,9 +136,9 @@
         <property name="geometry">
          <rect>
           <x>0</x>
-          <y>0</y>
-          <width>182</width>
-          <height>68</height>
+          <y>-52</y>
+          <width>168</width>
+          <height>120</height>
          </rect>
         </property>
         <attribute name="label">
@@ -159,6 +159,20 @@
           <widget class="QPushButton" name="cannyButton">
            <property name="text">
             <string>Canny</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QSlider" name="fuzzySlider">
+           <property name="orientation">
+            <enum>Qt::Horizontal</enum>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="fuzzyButton">
+           <property name="text">
+            <string>Fuzzy</string>
            </property>
           </widget>
          </item>

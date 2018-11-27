@@ -1,6 +1,7 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 #include "binarization.hpp"
+#include "fuzzy_edge_detection.hpp"
 #include "canny.hpp"
 #include "image.hpp"
 #include "boost/variant.hpp"
@@ -112,4 +113,31 @@ void MainWindow::on_cannySlider_sliderReleased()
 void MainWindow::on_toolBox_currentChanged(int index)
 {
     ui->cannySlider->setValue(0);
+    ui->fuzzySlider->setValue(0);
+}
+
+void MainWindow::on_fuzzyButton_clicked()
+{
+    if (im) {
+        auto im_fuzzy = fuzzy_edge_detection(im.grayscale());
+        im_fuzzy.set_name(im.purename()+"_fuzzy_edge_detection.png");
+        display_image(im_fuzzy);
+
+        im_transformed = std::move(im_fuzzy);
+
+        ui->fuzzySlider->setValue(35);
+    }
+
+}
+
+void MainWindow::on_fuzzySlider_sliderReleased()
+{
+    if (im) {
+        float threshold = ui->fuzzySlider->value()/100.0f;
+        auto im_fuzzy = fuzzy_edge_detection(im.grayscale(), threshold);
+        im_fuzzy.set_name(im.purename()+"_fuzzy_edge_detection.png");
+        display_image(im_fuzzy);
+
+        im_transformed = std::move(im_fuzzy);
+    }
 }

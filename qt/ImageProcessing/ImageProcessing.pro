@@ -30,13 +30,15 @@ SOURCES += \
         mainwindow.cpp \
     image.cpp \
     binarization.cpp \
-    canny.cpp
+    canny.cpp \
+    fuzzy_edge_detection.cpp
 
 HEADERS += \
         mainwindow.h \
     image.hpp \
     canny.hpp \
-    binarization.hpp
+    binarization.hpp \
+    fuzzy_edge_detection.hpp
 
 FORMS += \
         mainwindow.ui

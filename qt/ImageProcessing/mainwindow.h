@@ -32,6 +32,10 @@ private slots:
 
     void on_toolBox_currentChanged(int index);
 
+    void on_fuzzyButton_clicked();
+
+    void on_fuzzySlider_sliderReleased();
+
 private:
     Ui::MainWindow *ui;
 
