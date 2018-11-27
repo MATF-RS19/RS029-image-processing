@@ -79,7 +79,7 @@
      <item row="0" column="0" colspan="2">
       <widget class="QToolBox" name="toolBox">
        <property name="currentIndex">
-        <number>2</number>
+        <number>3</number>
        </property>
        <widget class="QWidget" name="page">
         <property name="geometry">
@@ -183,8 +183,8 @@
          <rect>
           <x>0</x>
           <y>0</y>
-          <width>182</width>
-          <height>68</height>
+          <width>168</width>
+          <height>79</height>
          </rect>
         </property>
         <attribute name="label">
@@ -192,16 +192,12 @@
         </attribute>
         <layout class="QVBoxLayout" name="verticalLayout_5">
          <item>
-          <widget class="QSlider" name="horizontalSlider_2">
-           <property name="orientation">
-            <enum>Qt::Horizontal</enum>
-           </property>
-          </widget>
+          <widget class="QSpinBox" name="pcaSpinBox"/>
          </item>
          <item>
-          <widget class="QPushButton" name="pushButton_5">
+          <widget class="QPushButton" name="pcaButton">
            <property name="text">
-            <string>PushButton</string>
+            <string>PCA</string>
            </property>
           </widget>
          </item>

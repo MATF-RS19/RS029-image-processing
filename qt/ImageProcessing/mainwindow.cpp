@@ -2,6 +2,7 @@
 #include "ui_mainwindow.h"
 #include "binarization.hpp"
 #include "fuzzy_edge_detection.hpp"
+#include "pca.hpp"
 #include "canny.hpp"
 #include "image.hpp"
 #include "boost/variant.hpp"
@@ -114,6 +115,7 @@ void MainWindow::on_toolBox_currentChanged(int index)
 {
     ui->cannySlider->setValue(0);
     ui->fuzzySlider->setValue(0);
+    ui->pcaSpinBox->setMaximum(std::min(im.cols(), im.rows()));
 }
 
 void MainWindow::on_fuzzyButton_clicked()
@@ -139,5 +141,17 @@ void MainWindow::on_fuzzySlider_sliderReleased()
         display_image(im_fuzzy);
 
         im_transformed = std::move(im_fuzzy);
+    }
+}
+
+void MainWindow::on_pcaButton_clicked()
+{
+    if (im) {
+        int k = ui->pcaSpinBox->value();
+        auto im_pca = pca(im, k);
+        im_pca.set_name(im.purename()+"_pca.png");
+        display_image(im_pca);
+
+        im_transformed = std::move(im_pca);
     }
 }

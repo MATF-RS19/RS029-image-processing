@@ -36,6 +36,8 @@ private slots:
 
     void on_fuzzySlider_sliderReleased();
 
+    void on_pcaButton_clicked();
+
 private:
     Ui::MainWindow *ui;
 
