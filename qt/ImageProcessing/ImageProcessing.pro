@@ -33,7 +33,8 @@ SOURCES += \
     canny.cpp \
     fuzzy_edge_detection.cpp \
     pca.cpp \
-    distortion.cpp
+    distortion.cpp \
+    displaylabel.cpp
 
 HEADERS += \
         mainwindow.h \
@@ -42,7 +43,8 @@ HEADERS += \
     binarization.hpp \
     fuzzy_edge_detection.hpp \
     pca.hpp \
-    distortion.hpp
+    distortion.hpp \
+    displaylabel.h
 
 FORMS += \
         mainwindow.ui

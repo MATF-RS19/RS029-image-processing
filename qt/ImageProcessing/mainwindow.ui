@@ -34,22 +34,22 @@
       </property>
       <layout class="QGridLayout" name="gridLayout">
        <property name="leftMargin">
-        <number>0</number>
+        <number>10</number>
        </property>
        <property name="topMargin">
-        <number>0</number>
+        <number>10</number>
        </property>
        <property name="rightMargin">
-        <number>0</number>
+        <number>10</number>
        </property>
        <property name="bottomMargin">
-        <number>0</number>
+        <number>10</number>
        </property>
        <property name="spacing">
         <number>0</number>
        </property>
        <item row="0" column="0">
-        <widget class="QLabel" name="displayImageLabel">
+        <widget class="displayLabel" name="displayImageLabel">
          <property name="sizePolicy">
           <sizepolicy hsizetype="MinimumExpanding" vsizetype="MinimumExpanding">
            <horstretch>0</horstretch>
@@ -175,8 +175,8 @@
         <property name="geometry">
          <rect>
           <x>0</x>
-          <y>-52</y>
-          <width>168</width>
+          <y>0</y>
+          <width>182</width>
           <height>120</height>
          </rect>
         </property>
@@ -222,7 +222,7 @@
          <rect>
           <x>0</x>
           <y>0</y>
-          <width>168</width>
+          <width>182</width>
           <height>79</height>
          </rect>
         </property>
@@ -271,6 +271,13 @@
   </widget>
  </widget>
  <layoutdefault spacing="6" margin="11"/>
+ <customwidgets>
+  <customwidget>
+   <class>displayLabel</class>
+   <extends>QLabel</extends>
+   <header location="global">displaylabel.h</header>
+  </customwidget>
+ </customwidgets>
  <resources/>
  <connections/>
 </ui>

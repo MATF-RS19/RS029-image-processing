@@ -8,12 +8,14 @@
 #include "image.hpp"
 #include "boost/variant.hpp"
 #include <QFileDialog>
+#include <QtGui>
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
+    connect(ui->displayImageLabel, SIGNAL(sendPoints(QVector<QPoint>&)), this, SLOT(remove_distortion(QVector<QPoint>&)));
 }
 
 MainWindow::~MainWindow()
@@ -25,11 +27,9 @@ void MainWindow::display_image(const auto& image)
 {
     if (!image) return;
 
-    //std::cout << ui->frame->width() << "," << ui->displayImageLabel->width() << std::endl;
-
     // fit dimensions
-    int height_max = std::min(image.rows(), ui->frame->height());
-    int width_max = std::min(image.cols(), ui->frame->width());
+    int height_max = std::min(image.rows(), ui->frame->height()-22);
+    int width_max = std::min(image.cols(), ui->frame->width()-22);
 
     int width = width_max;
     int height = width/image.get_aspect_ratio();
@@ -43,7 +43,6 @@ void MainWindow::display_image(const auto& image)
 
     // resize and keep aspect ratio
     auto im_display = image.resize(width, height);
-    //std::cout << ui->frame->width() << "," << ui->displayImageLabel->width() << std::endl;
 
     if (im_display.type() == img::Type::RGB) {
         // Qt reads in RGB whereas CV in BGR
@@ -163,44 +162,31 @@ void MainWindow::on_pcaButton_clicked()
     }
 }
 
-static std::vector<std::pair<float, float>> points_in;
-static std::vector<std::pair<float, float>> points_out;
-static float coeff;
 
-bool MainWindow::eventFilter(QObject *obj, QEvent *event)
+void MainWindow::remove_distortion(QVector<QPoint>& points)
 {
-    if (qobject_cast<QLabel*>(obj)==ui->displayImageLabel && event->type() == QEvent::MouseButtonPress) {
-        QMouseEvent *mouseEvent = static_cast<QMouseEvent*>(event);
-        int x = mouseEvent->pos().x();
-        int y = mouseEvent->pos().y();
+    float coeff = im.cols()/(float)ui->displayImageLabel->width();
 
-        std::cout << x << "," << y << std::endl;
+    std::vector<std::pair<float, float>> points_in;
+    std::vector<std::pair<float, float>> points_out;
 
-        if (points_in.size() < 4)
-            points_in.push_back(std::make_pair(coeff*y, coeff*x));
-        else if (points_out.size() < 4)
-            points_out.push_back(std::make_pair(coeff*y, coeff*x));
+    for (int i = 0; i < 4; i++)
+        points_in.push_back({points[i].y()*coeff, points[i].x()*coeff});
+    for (int i = 4; i < 8; i++)
+        points_out.push_back({points[i].y()*coeff, points[i].x()*coeff});
 
-        if (points_out.size()==4) {
-            qApp->removeEventFilter(this);
-            auto im_distortion = distortion(im, points_in, points_out);
-            im_distortion.set_name(im.purename()+"_distortion.png");
-            display_image(im_distortion);
+    auto im_distortion = distortion(im, points_in, points_out);
+    im_distortion.set_name(im.purename()+"_distortion.png");
+    display_image(im_distortion);
 
-            im_transformed = std::move(im_distortion);
-        }
-        //std::cout << mouseEvent->pos().x() << "," <<mouseEvent->pos().y()<< std::endl;
-    }
-
-    return false;
+    im_transformed = std::move(im_distortion);
+    ui->toolBox->setDisabled(false);
 }
 
 void MainWindow::on_distortionButton_clicked()
 {
     if (im) {
-        points_in.clear();
-        points_out.clear();
-        coeff = im.cols()/(float)ui->displayImageLabel->width();
-        qApp->installEventFilter(this);
+        ui->displayImageLabel->mouse_enabled = true;
+        ui->toolBox->setDisabled(true);
    }
 }

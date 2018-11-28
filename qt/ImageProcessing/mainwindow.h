@@ -5,6 +5,7 @@
 #include "image.hpp"
 #include "boost/variant.hpp"
 #include <QMouseEvent>
+#include <QVector>
 
 namespace Ui {
 class MainWindow;
@@ -21,7 +22,7 @@ private:
     void display_image(const auto& im);
 
 private slots:
-    bool eventFilter(QObject *obj, QEvent *event);
+//    bool eventFilter(QObject *obj, QEvent *event);
 
     void on_openImageButton_clicked();
 
@@ -42,6 +43,9 @@ private slots:
     void on_pcaButton_clicked();
 
     void on_distortionButton_clicked();
+
+ public slots:
+    void remove_distortion(QVector<QPoint>& points);
 
 private:
     Ui::MainWindow *ui;
