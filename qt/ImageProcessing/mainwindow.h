@@ -4,6 +4,7 @@
 #include <QMainWindow>
 #include "image.hpp"
 #include "boost/variant.hpp"
+#include <QMouseEvent>
 
 namespace Ui {
 class MainWindow;
@@ -20,6 +21,8 @@ private:
     void display_image(const auto& im);
 
 private slots:
+    bool eventFilter(QObject *obj, QEvent *event);
+
     void on_openImageButton_clicked();
 
     void on_binarizeButton_clicked();
@@ -37,6 +40,8 @@ private slots:
     void on_fuzzySlider_sliderReleased();
 
     void on_pcaButton_clicked();
+
+    void on_distortionButton_clicked();
 
 private:
     Ui::MainWindow *ui;

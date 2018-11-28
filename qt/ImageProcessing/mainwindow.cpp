@@ -2,6 +2,7 @@
 #include "ui_mainwindow.h"
 #include "binarization.hpp"
 #include "fuzzy_edge_detection.hpp"
+#include "distortion.hpp"
 #include "pca.hpp"
 #include "canny.hpp"
 #include "image.hpp"
@@ -24,9 +25,11 @@ void MainWindow::display_image(const auto& image)
 {
     if (!image) return;
 
+    //std::cout << ui->frame->width() << "," << ui->displayImageLabel->width() << std::endl;
+
     // fit dimensions
-    int height_max = std::min(image.rows(), ui->displayImageLabel->height());
-    int width_max = std::min(image.cols(), ui->displayImageLabel->width());
+    int height_max = std::min(image.rows(), ui->frame->height());
+    int width_max = std::min(image.cols(), ui->frame->width());
 
     int width = width_max;
     int height = width/image.get_aspect_ratio();
@@ -35,8 +38,12 @@ void MainWindow::display_image(const auto& image)
         width = height*image.get_aspect_ratio();
     }
 
+    ui->displayImageLabel->setSizePolicy(QSizePolicy::Fixed,QSizePolicy::Fixed);
+    ui->displayImageLabel->resize(width,height);
+
     // resize and keep aspect ratio
     auto im_display = image.resize(width, height);
+    //std::cout << ui->frame->width() << "," << ui->displayImageLabel->width() << std::endl;
 
     if (im_display.type() == img::Type::RGB) {
         // Qt reads in RGB whereas CV in BGR
@@ -154,4 +161,46 @@ void MainWindow::on_pcaButton_clicked()
 
         im_transformed = std::move(im_pca);
     }
+}
+
+static std::vector<std::pair<float, float>> points_in;
+static std::vector<std::pair<float, float>> points_out;
+static float coeff;
+
+bool MainWindow::eventFilter(QObject *obj, QEvent *event)
+{
+    if (qobject_cast<QLabel*>(obj)==ui->displayImageLabel && event->type() == QEvent::MouseButtonPress) {
+        QMouseEvent *mouseEvent = static_cast<QMouseEvent*>(event);
+        int x = mouseEvent->pos().x();
+        int y = mouseEvent->pos().y();
+
+        std::cout << x << "," << y << std::endl;
+
+        if (points_in.size() < 4)
+            points_in.push_back(std::make_pair(coeff*y, coeff*x));
+        else if (points_out.size() < 4)
+            points_out.push_back(std::make_pair(coeff*y, coeff*x));
+
+        if (points_out.size()==4) {
+            qApp->removeEventFilter(this);
+            auto im_distortion = distortion(im, points_in, points_out);
+            im_distortion.set_name(im.purename()+"_distortion.png");
+            display_image(im_distortion);
+
+            im_transformed = std::move(im_distortion);
+        }
+        //std::cout << mouseEvent->pos().x() << "," <<mouseEvent->pos().y()<< std::endl;
+    }
+
+    return false;
+}
+
+void MainWindow::on_distortionButton_clicked()
+{
+    if (im) {
+        points_in.clear();
+        points_out.clear();
+        coeff = im.cols()/(float)ui->displayImageLabel->width();
+        qApp->installEventFilter(this);
+   }
 }

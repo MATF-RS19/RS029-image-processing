@@ -32,7 +32,8 @@ SOURCES += \
     binarization.cpp \
     canny.cpp \
     fuzzy_edge_detection.cpp \
-    pca.cpp
+    pca.cpp \
+    distortion.cpp
 
 HEADERS += \
         mainwindow.h \
@@ -40,7 +41,8 @@ HEADERS += \
     canny.hpp \
     binarization.hpp \
     fuzzy_edge_detection.hpp \
-    pca.hpp
+    pca.hpp \
+    distortion.hpp
 
 FORMS += \
         mainwindow.ui
