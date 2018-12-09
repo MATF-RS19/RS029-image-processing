@@ -8,6 +8,8 @@ displayLabel::displayLabel(QWidget* parent) : QLabel (parent), mouse_enabled(fal
 
 void displayLabel::mousePressEvent(QMouseEvent* e)
 {
+    QLabel::mousePressEvent(e);
+
     if (!mouse_enabled) return;
     points.push_back(e->pos());
     if (points.size() == 8) {
@@ -34,13 +36,13 @@ void displayLabel::paintEvent(QPaintEvent *)
        const QPoint& p = points.back();
        QBrush cetkica=QBrush(Qt::red);
        painter.setBrush(cetkica);
-       QPen olovka(Qt::black,1.5);
-       painter.setPen(olovka);
+       QPen pen(Qt::black,1.5);
+       painter.setPen(pen);
 
        //draw a vertex on mouse press
        painter.drawEllipse(p.x()-5,p.y()-5,10,10);
-       olovka.setColor(Qt::green);
-       painter.setPen(olovka);
+       pen.setColor(Qt::green);
+       painter.setPen(pen);
 
        painter.drawText(QPoint(p.x()-10,p.y()-10), QString::number(points.size()));
    }
