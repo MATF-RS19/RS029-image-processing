@@ -8,6 +8,24 @@ static const int ALMOST_WHITE = 254;
 
 static const double pi = 3.14159265358979323846;
 
+template <typename Function, typename... Args>
+static void start_threads(int start, int end, Function&& func, Args&&... args) {
+
+	int num_threads = 4; // don't do this
+	std::vector<std::thread> threads(num_threads);
+	int rows = end;
+	for (int i = 0; i < num_threads; i++) {
+		int from = std::max(rows/num_threads * i, start);
+		int to = (i==num_threads-1) ? rows : from + rows/num_threads;
+		auto f = std::bind(std::forward<Function>(func), std::forward<Args>(args)..., from, to);
+		threads[i] = std::thread(f);
+	}
+
+	for (int i = 0; i < num_threads; i++) {
+		threads[i].join();
+	}
+}
+
 // Check two pixels that belong to the parallel lines below and above the line of a pixel (i,j). If magnitude of pixel (i,j) is greater than the magnitude of those two pixels return true.
 static bool is_maximum(int i, int j, const std::vector<std::vector<float>>&  magnitude, const std::vector<std::vector<float>>& angles)
 {
@@ -145,24 +163,14 @@ static void sobel_operator_help(const img::Image<img::Type::GRAYSCALE>& img,std:
 	}
 }
 
+
+
 static std::pair<std::vector<std::vector<float>>, std::vector<std::vector<float>>> sobel_operator(const img::Image<img::Type::GRAYSCALE>& img)
 {
 	std::vector<std::vector<float>> magnitude(img.rows(), std::vector<float>(img.cols(), 0));
 	std::vector<std::vector<float>> angles(img.rows(), std::vector<float>(img.cols(), 0));
 
-	int num_threads = 4; // don't do this
-	std::vector<std::thread> threads(num_threads);
-	int rows = img.rows()-2;
-	for (int i = 0; i < num_threads; i++) {
-		int from = rows/num_threads * i;
-		int to = (i==num_threads-1) ? rows : from + rows/num_threads;
-		threads[i] = std::thread(sobel_operator_help, std::ref(img), std::ref(magnitude), std::ref(angles), from, to);
-	}
-
-	for (int i = 0; i < num_threads; i++) {
-		threads[i].join();
-	}
-
+	start_threads(0, img.rows()-2, sobel_operator_help, std::ref(img), std::ref(magnitude), std::ref(angles));
 	return {magnitude, angles};
 }
 
@@ -180,19 +188,7 @@ static void nonmaximum_supression_help(img::Image<img::Type::GRAYSCALE>& output,
 
 static void nonmaximum_supression(img::Image<img::Type::GRAYSCALE>& output, const std::vector<std::vector<float>>& magnitude, const std::vector<std::vector<float>>& angles, int upper_threshold)
 {
-	int num_threads = 4; // don't do this
-	std::vector<std::thread> threads(num_threads);
-	int rows = output.rows()-1;
-	for (int i = 0; i < num_threads; i++) {
-		int from = rows/num_threads * i;
-		from = std::max(1, from);
-		int to = (i==num_threads-1) ? rows : from + rows/num_threads;
-		threads[i] = std::thread(nonmaximum_supression_help, std::ref(output), std::ref(magnitude), std::ref(angles), upper_threshold, from, to);
-	}
-
-	for (int i = 0; i < num_threads; i++) {
-		threads[i].join();
-	}
+	start_threads(1, output.rows()-1, nonmaximum_supression_help,  std::ref(output), std::ref(magnitude), std::ref(angles), upper_threshold);
 }
 
 // "grow" lines
@@ -219,24 +215,10 @@ static void hysteresis(img::Image<img::Type::GRAYSCALE>& output, const std::vect
 {
 	bool change = true;
 
-	int num_threads = 4; // don't do this
-	std::vector<std::thread> threads(num_threads);
-	int rows = output.rows()-2;
-
-
 	while (change) {
 		change = false;
 
-		for (int i = 0; i < num_threads; i++) {
-			int from = rows/num_threads * i;
-			from = std::max(2, from);
-			int to = (i==num_threads-1) ? rows : from + rows/num_threads;
-			threads[i] = std::thread(hysteresis_help, std::ref(output), std::ref(magnitude), std::ref(angles), lower_threshold, std::ref(change), from, to);
-		}
-
-		for (int i = 0; i < num_threads; i++) {
-			threads[i].join();
-		}
+		start_threads(2, output.rows()-2, hysteresis_help, std::ref(output), std::ref(magnitude), std::ref(angles), lower_threshold, std::ref(change));
 	}
 }
 
@@ -256,16 +238,19 @@ img::Image<img::Type::GRAYSCALE> canny(img::Image<img::Type::GRAYSCALE> img, int
 
 int main()
 {
-	// auto tstart = std::time(0);
+	auto tstart = std::time(0);
+	// for (int i = 0; i < 30; i++) {
+		
 	img::Image<img::Type::GRAYSCALE> img("images/blackboard.jpg");
 	if (!img) return -1;
 
 	auto output = canny(img);
+	// }
 
 	output.show();
 	cv::waitKey(0);
 	output.save("canny_output.png");
-	// std::cout << std::time(0)-tstart << std::endl;
+	std::cout << std::time(0)-tstart << std::endl;
 
     return 0;
 }
