@@ -22,7 +22,7 @@ namespace img {
 
 	public:
 		Image(const std::experimental::filesystem::path& path);
-		Image(unsigned rows = 0, unsigned cols = 0);
+		Image(unsigned rows = 0, unsigned cols = 0, Color color = Color::WHITE);
 		Image(const cv::Mat& data)
 			: m_data(data)
 		{}
@@ -131,14 +131,14 @@ namespace img {
 	}
 
 	template <>
-	Image<Type::RGB>::Image(unsigned rows, unsigned cols)
-		: m_data(cv::Mat(rows, cols, CV_8UC3, cv::Scalar(Color::WHITE, Color::WHITE, Color::WHITE)))
+	Image<Type::RGB>::Image(unsigned rows, unsigned cols, Color color)
+		: m_data(cv::Mat(rows, cols, CV_8UC3, cv::Scalar(color, color, color)))
 	{
 	}
 
 	template <>
-	Image<Type::GRAYSCALE>::Image(unsigned rows, unsigned cols)
-		: m_data(cv::Mat(rows, cols, CV_8UC1, cv::Scalar(Color::WHITE)))
+	Image<Type::GRAYSCALE>::Image(unsigned rows, unsigned cols, Color color)
+		: m_data(cv::Mat(rows, cols, CV_8UC1, cv::Scalar(color)))
 	{
 	}
 

@@ -108,16 +108,9 @@ static bool check_neighbours(img::Image<img::Type::GRAYSCALE>& output, int i, in
 }
 
 // 5x5 gaussian filter with standard deviation 1.4
-static void gaussian_blur(img::Image<img::Type::GRAYSCALE>& img)
+static void gaussian_blur_help(const img::Image<img::Type::GRAYSCALE>& img, img::Image<img::Type::GRAYSCALE>& output, const std::vector<float>& gauss, int from, int to)
 {
-	std::vector<float> gauss
-		{2.0/159, 4.0/159, 5.0/159, 4.0/159, 2.0/159, 
-		4.0/159, 9.0/159, 12.0/159, 9.0/159, 4.0/159,
-		5.0/159, 12.0/159, 15.0/159, 12.0/159, 5.0/159,
-		4.0/159, 9.0/159, 12.0/159, 9.0/159, 4.0/159,
-		2.0/159, 4.0/159, 5.0/159, 4.0/159, 2.0/159};
-
-	for (int i = 0; i < img.rows()-4; ++i) {
+	for (int i = from; i < to; ++i) {
 		for (int j = 0; j < img.cols()-4; ++j) {
 			std::vector<float> current;
 			current.reserve(25);
@@ -129,9 +122,24 @@ static void gaussian_blur(img::Image<img::Type::GRAYSCALE>& img)
 
 			int s = std::inner_product(gauss.cbegin(), gauss.cend(), current.cbegin(), 0.0);
 
-			img(i+2, j+2) = s;
+			output(i+2, j+2) = s;
 		}
 	}
+}
+
+static img::Image<img::Type::GRAYSCALE> gaussian_blur(const img::Image<img::Type::GRAYSCALE>& img)
+{
+	img::Image<img::Type::GRAYSCALE> output(img.rows(), img.cols());
+	std::vector<float> gauss
+		{2.0/159, 4.0/159, 5.0/159, 4.0/159, 2.0/159, 
+		4.0/159, 9.0/159, 12.0/159, 9.0/159, 4.0/159,
+		5.0/159, 12.0/159, 15.0/159, 12.0/159, 5.0/159,
+		4.0/159, 9.0/159, 12.0/159, 9.0/159, 4.0/159,
+		2.0/159, 4.0/159, 5.0/159, 4.0/159, 2.0/159};
+
+	start_threads(0, img.rows()-4, gaussian_blur_help, std::ref(img), std::ref(output), std::ref(gauss));
+
+	return output;
 }
 
 // Get gradient directions and magnitude.
@@ -223,25 +231,39 @@ static void hysteresis(img::Image<img::Type::GRAYSCALE>& output, const std::vect
 }
 
 
-img::Image<img::Type::GRAYSCALE> canny(img::Image<img::Type::GRAYSCALE> img, int lower_threshold = 20, int upper_threshold = 60)
+img::Image<img::Type::GRAYSCALE> canny(const img::Image<img::Type::GRAYSCALE>& img, int lower_threshold = 20, int upper_threshold = 60)
 {
 	// get rid of a noise
-	gaussian_blur(img);
+	auto output = gaussian_blur(img);
 
-	auto [magnitude, angles] = sobel_operator(img);
-	nonmaximum_supression(img, magnitude, angles, upper_threshold);
-	hysteresis(img, magnitude, angles, lower_threshold);
+	auto [magnitude, angles] = sobel_operator(output);
+	nonmaximum_supression(output, magnitude, angles, upper_threshold);
+	hysteresis(output, magnitude, angles, lower_threshold);
 
-	return img;
+	for (int i = 0; i < output.rows(); i++) {
+		for (int j = 0; j < 4; j++) {
+			output(i, j) = img::Color::BLACK;
+			output(i, output.cols()-1-j) = img::Color::BLACK;
+		}
+	}
+
+	for (int j = 0; j < output.cols(); j++) {
+		for (int i = 0; i < 4; i++) {
+			output(i, j) = img::Color::BLACK;
+			output(output.rows()-1-i, j) = img::Color::BLACK;
+		}
+	}
+
+	return output;
 }
 
 
 int main()
 {
 	auto tstart = std::time(0);
-	// for (int i = 0; i < 30; i++) {
+	// for (int i = 0; i < 100; i++) {
 		
-	img::Image<img::Type::GRAYSCALE> img("images/blackboard.jpg");
+	img::Image<img::Type::GRAYSCALE> img("images/sobel.png");
 	if (!img) return -1;
 
 	auto output = canny(img);
