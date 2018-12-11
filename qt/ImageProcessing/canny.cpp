@@ -2,27 +2,24 @@
 #include <vector>
 #include <numeric>
 #include <stack>
-#include <thread>
+#include <future>
 
 static const int ALMOST_WHITE = 254;
 
 static const double pi = 3.14159265358979323846;
 
 template <typename Function, typename... Args>
-static void start_threads(int start, int end, Function&& func, Args&&... args) {
-
+static void start_threads(int start, int end, Function&& func, Args&&... args)
+{
     int num_threads = 4; // don't do this
-    std::vector<std::thread> threads(num_threads);
+    std::vector<std::future<void>> threads(num_threads);
     int rows = end;
     for (int i = 0; i < num_threads; i++) {
         int from = std::max(rows/num_threads * i, start);
         int to = (i==num_threads-1) ? rows : from + rows/num_threads;
-        auto f = std::bind(std::forward<Function>(func), std::forward<Args>(args)..., from, to);
-        threads[i] = std::thread(f);
-    }
-
-    for (int i = 0; i < num_threads; i++) {
-        threads[i].join();
+        // should func be forwarded?
+        // careful - from and to mustn't be captured with &
+        threads[i] = std::async([&,from,to]{ std::forward<Function>(func)(std::forward<Args>(args)..., from, to); });
     }
 }
 
@@ -137,7 +134,7 @@ static img::Image<img::Type::GRAYSCALE> gaussian_blur(const img::Image<img::Type
         4.0/159, 9.0/159, 12.0/159, 9.0/159, 4.0/159,
         2.0/159, 4.0/159, 5.0/159, 4.0/159, 2.0/159};
 
-    start_threads(0, img.rows()-4, gaussian_blur_help, std::ref(img), std::ref(output), std::ref(gauss));
+    start_threads(0, img.rows()-4, gaussian_blur_help, img, output, gauss);
 
     return output;
 }
@@ -178,7 +175,7 @@ static std::pair<std::vector<std::vector<float>>, std::vector<std::vector<float>
     std::vector<std::vector<float>> magnitude(img.rows(), std::vector<float>(img.cols(), 0));
     std::vector<std::vector<float>> angles(img.rows(), std::vector<float>(img.cols(), 0));
 
-    start_threads(0, img.rows()-2, sobel_operator_help, std::ref(img), std::ref(magnitude), std::ref(angles));
+    start_threads(0, img.rows()-2, sobel_operator_help, img, magnitude, angles);
     return {magnitude, angles};
 }
 
@@ -196,7 +193,7 @@ static void nonmaximum_supression_help(img::Image<img::Type::GRAYSCALE>& output,
 
 static void nonmaximum_supression(img::Image<img::Type::GRAYSCALE>& output, const std::vector<std::vector<float>>& magnitude, const std::vector<std::vector<float>>& angles, int upper_threshold)
 {
-    start_threads(1, output.rows()-1, nonmaximum_supression_help,  std::ref(output), std::ref(magnitude), std::ref(angles), upper_threshold);
+    start_threads(1, output.rows()-1, nonmaximum_supression_help, output, magnitude, angles, upper_threshold);
 }
 
 // "grow" lines
@@ -226,7 +223,7 @@ static void hysteresis(img::Image<img::Type::GRAYSCALE>& output, const std::vect
     while (change) {
         change = false;
 
-        start_threads(2, output.rows()-2, hysteresis_help, std::ref(output), std::ref(magnitude), std::ref(angles), lower_threshold, std::ref(change));
+        start_threads(2, output.rows()-2, hysteresis_help, output, magnitude, angles, lower_threshold, change);
     }
 }
 
@@ -257,3 +254,4 @@ img::Image<img::Type::GRAYSCALE> canny(const img::Image<img::Type::GRAYSCALE>& i
     return output;
 }
 
+#include <thread>
