@@ -99,6 +99,9 @@ namespace img {
 		}
 
 		unsigned pixel_sum(unsigned i, unsigned j) const;
+		unsigned red(unsigned i, unsigned j) const;
+		unsigned green(unsigned i, unsigned j) const;
+		unsigned blue(unsigned i, unsigned j) const;
 
 		std::conditional_t<t==Type::RGB, cv::Vec3b, unsigned char>& operator()(unsigned i, unsigned j);
 		const std::conditional_t<t==Type::RGB, cv::Vec3b, unsigned char>& operator()(unsigned i, unsigned j) const;
@@ -220,6 +223,24 @@ namespace img {
 	{
 		auto& x = m_data.at<cv::Vec3b>(i, j);
 		return x[R] + x[G] + x[B];
+	}
+
+	template<>
+	unsigned Image<Type::RGB>::red(unsigned i, unsigned j) const
+	{
+		return m_data.at<cv::Vec3b>(i, j)[R];
+	}
+
+	template<>
+	unsigned Image<Type::RGB>::green(unsigned i, unsigned j) const
+	{
+		return m_data.at<cv::Vec3b>(i, j)[G];
+	}
+
+	template<>
+	unsigned Image<Type::RGB>::blue(unsigned i, unsigned j) const
+	{
+		return m_data.at<cv::Vec3b>(i, j)[B];
 	}
 
 	template<>
