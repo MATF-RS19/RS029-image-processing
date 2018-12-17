@@ -29,4 +29,4 @@ image.o: include/image.cpp include/image.hpp
 .PHONY: clean
 
 clean:
-	rm -rf pca distortion canny binarization
+	rm -rf pca distortion canny binarization *.o

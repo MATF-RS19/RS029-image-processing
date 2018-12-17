@@ -1,8 +1,6 @@
-#include "binarization.hpp"
-#include <vector>
+#include "image.hpp"
 #include <iostream>
 #include <cmath>
-#include <thread>
 #include <mutex>
 
 static float m = 2;
@@ -14,29 +12,6 @@ void set_picture(const std::vector<std::vector<float>>& m1, const std::vector<st
 	for (int i = from; i < to; i++) {
 		for (int j = 0; j < img.cols(); j++) {
 			img(i,j) = (m1[i][j]>m2[i][j]) ? img::WHITE : img::BLACK;
-			// if (m1[i][j]>0.9) {
-			// 	binary(i,j)=img::WHITE;
-			// }
-			// else {
-			// 	float median;
-			// 	if (i==0 || j==0 || i==rows-1 || j==cols-j)
-			// 		median = m1[i][j];
-			// 	else {
-			// 		std::vector<float> v;
-			// 		for (int a = -1; a <= 1; a++) {
-			// 			for (int b = -1; b <= 1; b++) {
-			// 				v.push_back(m1[i+a][j+b]);
-			// 			}
-			// 		}
-			// 		std::sort(v.begin(), v.end());
-			// 		median = v[4];
-			// 	}
-
-			// 	if (median > m2[i][j])
-			// 		binary(i,j)=img::WHITE;
-			// 	else
-			// 		binary(i,j)=img::BLACK;
-			// }
 		}
 	}
 }
@@ -89,21 +64,17 @@ void update_m(double& sum_u,
 
 	for (int i = from; i < to; i++) {
 		for (int j = 0; j < img.cols(); j++) {
-            float d1=(C1-img(i,j))*(C1-img(i,j));
-            float d2=(C2-img(i,j))*(C2-img(i,j));
-            float d_sq1 = 1.0/d1;
+			float d1=((C1-img(i,j))*(C1-img(i,j)));
+			float d2=((C2-img(i,j))*(C2-img(i,j)));
+			float d_sq1 = 1.0/d1;
 			float d_sq2 = 1.0/d2;
 			float a = std::pow(d_sq1, 1.0/(m-1));
 			float b = std::pow(d_sq2, 1.0/(m-1));
-            if (std::abs(d1)<0.0001)
-                a = 100000000;
-            if (std::abs(d2)<0.0001)
-                b = 100000000;
-            sum_u_tmp += std::pow(m1[i][j]-a/(a+b),2) + std::pow(m2[i][j]-b/(a+b),2);
+			sum_u_tmp += std::pow(m1[i][j]-a/(a+b),2) + std::pow(m2[i][j]-b/(a+b),2);
 
 			m1[i][j] = a/(a+b);
 			m2[i][j] = b/(a+b);
-        }
+		}
 	}
 
 	std::lock_guard<std::mutex> lock(mu);
@@ -112,84 +83,42 @@ void update_m(double& sum_u,
 
 img::Image<img::Type::GRAYSCALE> binarization(const img::Image<img::Type::GRAYSCALE>& img)
 {
-	auto [rows, cols] = img.dimension();
+    auto&& [rows, cols] = img.dimension();
 
-    img::Image<img::Type::GRAYSCALE> binary(rows, cols);
+	img::Image<img::Type::GRAYSCALE> binary(rows, cols);
 
 	std::vector<std::vector<float>> m1(rows, std::vector<float>(cols, 0));
 	std::vector<std::vector<float>> m2(rows, std::vector<float>(cols, 0));
 
-	int num_threads = 4;
-	std::vector<std::thread> threads(num_threads);
-	for (int i = 0; i < num_threads; i++) {
-		int from = rows/num_threads * i;
-		int to = (i==num_threads-1) ? rows : from + rows/num_threads;
-		threads[i] = std::thread(init_m, std::ref(m1), std::ref(m2), std::ref(img), from, to);
-	}
-
-	for (int i = 0; i < num_threads; i++) {
-		threads[i].join();
-	}
-
+	img::start_threads(0, rows, init_m, m1, m2, img);
 
 	double sum_u = 0;
 	int iter=0;
 
 
 	do {
-		iter++;
+		++iter;
 
 		double C1 = 0;
 		double C2 = 0;
 		double m1_sum = 0;
 		double m2_sum = 0;
 
-		for (int i = 0; i < num_threads; i++) {
-			int from = rows/num_threads * i;
-			int to = (i==num_threads-1) ? rows : from + rows/num_threads;
-			threads[i] = std::thread(centroids, std::ref(C1), std::ref(C2),
-									std::ref(m1_sum), std::ref(m2_sum),
-									std::ref(m1), std::ref(m2), std::ref(img), from, to);
-		}
-
-		for (int i = 0; i < num_threads; i++) {
-			threads[i].join();
-		}
+		img::start_threads(0, rows, centroids, C1, C2, m1_sum, m2_sum, m1, m2, img);
 
 		C1 /= m1_sum;
 		C2 /= m2_sum;
 
 		sum_u = 0;
 
-		for (int i = 0; i < num_threads; i++) {
-			int from = rows/num_threads * i;
-			int to = (i==num_threads-1) ? rows : from + rows/num_threads;
-			threads[i] = std::thread(update_m,  std::ref(sum_u),
-									std::ref(m1), std::ref(m2),
-									C1, C2,
-									 std::ref(img), from, to);
-		}
-
-		for (int i = 0; i < num_threads; i++) {
-			threads[i].join();
-		}
+		img::start_threads(0, rows, update_m, sum_u, m1, m2, C1, C2, img);
 
 		if (iter > 30) break;
-    } while(sum_u > 1);
+	} while(sum_u>1);
 
 	std::cout << "iterations: " << iter << std::endl;
 
-	for (int i = 0; i < num_threads; i++) {
-		int from = rows/num_threads * i;
-		int to = (i==num_threads-1) ? rows : from + rows/num_threads;
-		threads[i] = std::thread(set_picture,  
-								std::ref(m1), std::ref(m2),
-								 std::ref(binary), from, to);
-	}
-
-	for (int i = 0; i < num_threads; i++) {
-		threads[i].join();
-	}
+	img::start_threads(0, rows, set_picture, m1, m2, binary);
 
     return binary;
 }

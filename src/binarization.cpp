@@ -1,7 +1,6 @@
 #include "image.hpp"
 #include <iostream>
 #include <cmath>
-#include <thread>
 #include <mutex>
 
 static float m = 2;
@@ -85,70 +84,39 @@ void update_m(double& sum_u,
 int main()
 {
 	// img::Image<img::Type::GRAYSCALE> img("images/r2d2.jpg");
-	// img::Image<img::Type::GRAYSCALE> img("images/blackboard.jpg");
+	img::Image<img::Type::GRAYSCALE> img("images/blackboard.jpg");
 	// img::Image<img::Type::GRAYSCALE> img("images/storm_trooper.jpg");
-	img::Image<img::Type::GRAYSCALE> img("images/mat.jpg");
-	auto [rows, cols] = img.dimension();
+	// img::Image<img::Type::GRAYSCALE> img("images/mat.jpg");
+
+	auto&& [rows, cols] = img.dimension();
 
 	img::Image<img::Type::GRAYSCALE> binary(rows, cols);
 
 	std::vector<std::vector<float>> m1(rows, std::vector<float>(cols, 0));
 	std::vector<std::vector<float>> m2(rows, std::vector<float>(cols, 0));
 
-	int num_threads = 4;
-	std::vector<std::thread> threads(num_threads);
-	for (int i = 0; i < num_threads; i++) {
-		int from = rows/num_threads * i;
-		int to = (i==num_threads-1) ? rows : from + rows/num_threads;
-		threads[i] = std::thread(init_m, std::ref(m1), std::ref(m2), std::ref(img), from, to);
-	}
-
-	for (int i = 0; i < num_threads; i++) {
-		threads[i].join();
-	}
-
+	img::start_threads(0, rows, init_m, m1, m2, img);
 
 	double sum_u = 0;
 	int iter=0;
 
 
 	do {
-		iter++;
+		++iter;
 
 		double C1 = 0;
 		double C2 = 0;
 		double m1_sum = 0;
 		double m2_sum = 0;
 
-		for (int i = 0; i < num_threads; i++) {
-			int from = rows/num_threads * i;
-			int to = (i==num_threads-1) ? rows : from + rows/num_threads;
-			threads[i] = std::thread(centroids, std::ref(C1), std::ref(C2),
-									std::ref(m1_sum), std::ref(m2_sum),
-									std::ref(m1), std::ref(m2), std::ref(img), from, to);
-		}
-
-		for (int i = 0; i < num_threads; i++) {
-			threads[i].join();
-		}
+		img::start_threads(0, rows, centroids, C1, C2, m1_sum, m2_sum, m1, m2, img);
 
 		C1 /= m1_sum;
 		C2 /= m2_sum;
 
 		sum_u = 0;
 
-		for (int i = 0; i < num_threads; i++) {
-			int from = rows/num_threads * i;
-			int to = (i==num_threads-1) ? rows : from + rows/num_threads;
-			threads[i] = std::thread(update_m,  std::ref(sum_u),
-									std::ref(m1), std::ref(m2),
-									C1, C2,
-									 std::ref(img), from, to);
-		}
-
-		for (int i = 0; i < num_threads; i++) {
-			threads[i].join();
-		}
+		img::start_threads(0, rows, update_m, sum_u, m1, m2, C1, C2, img);
 
 		if (iter > 30) break;
 		// std::cout << C1 << std::endl;
@@ -156,17 +124,7 @@ int main()
 
 	std::cout << "iterations: " << iter << std::endl;
 
-	for (int i = 0; i < num_threads; i++) {
-		int from = rows/num_threads * i;
-		int to = (i==num_threads-1) ? rows : from + rows/num_threads;
-		threads[i] = std::thread(set_picture,  
-								std::ref(m1), std::ref(m2),
-								 std::ref(binary), from, to);
-	}
-
-	for (int i = 0; i < num_threads; i++) {
-		threads[i].join();
-	}
+	img::start_threads(0, rows, set_picture, m1, m2, binary);
 
 	binary.show();
 	cv::waitKey(0);
