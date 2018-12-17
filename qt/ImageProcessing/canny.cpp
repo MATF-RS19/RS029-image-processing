@@ -1,257 +1,247 @@
-#include "canny.hpp"
+#include "image.hpp"
 #include <vector>
 #include <numeric>
-#include <stack>
-#include <future>
 
 static const int ALMOST_WHITE = 254;
 
 static const double pi = 3.14159265358979323846;
 
-template <typename Function, typename... Args>
-static void start_threads(int start, int end, Function&& func, Args&&... args)
-{
-    int num_threads = 4; // don't do this
-    std::vector<std::future<void>> threads(num_threads);
-    int rows = end;
-    for (int i = 0; i < num_threads; i++) {
-        int from = std::max(rows/num_threads * i, start);
-        int to = (i==num_threads-1) ? rows : from + rows/num_threads;
-        // should func be forwarded?
-        // careful - from and to mustn't be captured with &
-        threads[i] = std::async([&,from,to]{ std::forward<Function>(func)(std::forward<Args>(args)..., from, to); });
-    }
-}
+using pixel = std::pair<int,int>;
+
+class canny_output {
+public:
+	std::vector<std::vector<float>> magnitude;
+	std::vector<std::vector<float>> angles;
+	img::Image<img::Type::GRAYSCALE> output;
+	const img::Image<img::Type::GRAYSCALE>& img;
+
+	canny_output(const img::Image<img::Type::GRAYSCALE>& img)
+		: magnitude(img.rows(), std::vector<float>(img.cols(), 0)),
+		  angles(img.rows(), std::vector<float>(img.cols(), 0)),
+		  output(img.rows(), img.cols()),
+		  img(img)
+	{}
+};
 
 // Check two pixels that belong to the parallel lines below and above the line of a pixel (i,j). If magnitude of pixel (i,j) is greater than the magnitude of those two pixels return true.
-static bool is_maximum(int i, int j, const std::vector<std::vector<float>>&  magnitude, const std::vector<std::vector<float>>& angles)
+static bool is_maximum(canny_output& c, const pixel& p)
 {
-    int angle = angles[i][j];
-    std::pair<int, int> n1, n2;
-    if (angle == 0) {
-        // vertical line
-        n1 = {i, j-1};
-        n2 = {i, j+1};
-    }
-    else if (angle == 45) {
-        // line is from top right to bottom left (careful here! angles go in the negative direction)
-        n1 = {i-1, j-1};
-        n2 = {i+1, j+1};
-    }
-    else if (angle == 90) {
-        // horizontal line
-        n1 = {i-1, j};
-        n2 = {i+1, j};
-    }
-    else if (angle == 135) {
-        // line is from top left to bottom right (careful here! angles go in the negative direction)
-        n1 = {i-1, j+1};
-        n2 = {i+1, j-1};
-    }
+	auto&& [i, j] = p;
+	int angle = c.angles[i][j];
+	std::pair<int, int> n1, n2;
+	if (angle == 0) {
+		// vertical line
+		n1 = {i, j-1};
+		n2 = {i, j+1};
+	}
+	else if (angle == 45) {
+		// line is from top right to bottom left (careful here! angles go in the negative direction)
+		n1 = {i-1, j-1};
+		n2 = {i+1, j+1};
+	}
+	else if (angle == 90) {
+		// horizontal line
+		n1 = {i-1, j};
+		n2 = {i+1, j};
+	}
+	else if (angle == 135) {
+		// line is from top left to bottom right (careful here! angles go in the negative direction)
+		n1 = {i-1, j+1};
+		n2 = {i+1, j-1};
+	}
 
-    return (magnitude[i][j] > magnitude[n1.first][n1.second]) && (magnitude[i][j] > magnitude[n2.first][n2.second]);
+	return (c.magnitude[i][j] > c.magnitude[n1.first][n1.second]) && (c.magnitude[i][j] > c.magnitude[n2.first][n2.second]);
 }
 
 // Check the two pixels in the direction of the edge (ie, perpendicular to the gradient direction). If the following conditions are satisfied mark them as an edge and return true:
 // Have the direction same as the central pixel
 // Gradient magnitude is greater than the lower threshold
 // They are the maximum compared to their neighbors (nonmaximum suppression for these pixels)
-static bool check_neighbours(img::Image<img::Type::GRAYSCALE>& output, int i, int j, const std::vector<std::vector<float>>& magnitude, const std::vector<std::vector<float>>& angles, int lower_threshold)
+static bool check_neighbours(canny_output& c, const pixel& p, int lower_threshold)
 {
-    int angle = angles[i][j];
-    std::pair<int, int> n1, n2;
-    if (angle == 0) {
-        // vertical line
-        n1 = {i-1, j};
-        n2 = {i+1, j};
-    }
-    else if (angle == 45) {
-        // line is from top right to bottom left (careful here! angles go in the negative direction)
-        n1 = {i-1, j+1};
-        n2 = {i+1, j-1};
-    }
-    else if (angle == 90) {
-        // horizontal line
-        n1 = {i, j-1};
-        n2 = {i, j+1};
-    }
-    else if (angle == 135) {
-        // line is from top left to bottom right (careful here! angles go in the negative direction)
-        n1 = {i-1, j-1};
-        n2 = {i+1, j+1};
-    }
+	auto&& [i, j] = p;
 
-    bool ind = false;
+	int angle = c.angles[i][j];
+	std::pair<int, int> n1, n2;
+	if (angle == 0) {
+		// vertical line
+		n1 = {i-1, j};
+		n2 = {i+1, j};
+	}
+	else if (angle == 45) {
+		// line is from top right to bottom left (careful here! angles go in the negative direction)
+		n1 = {i-1, j+1};
+		n2 = {i+1, j-1};
+	}
+	else if (angle == 90) {
+		// horizontal line
+		n1 = {i, j-1};
+		n2 = {i, j+1};
+	}
+	else if (angle == 135) {
+		// line is from top left to bottom right (careful here! angles go in the negative direction)
+		n1 = {i-1, j-1};
+		n2 = {i+1, j+1};
+	}
 
-    if (output(n1.first, n1.second) == 0 && magnitude[n1.first][n1.second] > lower_threshold) {
-        if (angles[n1.first][n1.second] == angle) {
-            if (is_maximum(n1.first, n1.second, magnitude, angles)) {
-                output(n1.first, n1.second)= ALMOST_WHITE;
-                ind = true;
-            }
-        }
-    }
+	bool ind = false;
 
-    if (output(n2.first, n2.second) == 0 && magnitude[n2.first][n2.second] > lower_threshold) {
-        if (angles[n2.first][n2.second] == angle) {
-            if (is_maximum(n2.first, n2.second, magnitude, angles)) {
-                output(n2.first, n2.second)= ALMOST_WHITE;
-                ind = true;
-            }
-        }
-    }
+	if (c.output(n1.first, n1.second) == 0 && c.magnitude[n1.first][n1.second] > lower_threshold) {
+		if (c.angles[n1.first][n1.second] == angle) {
+			if (is_maximum(c, n1)) {
+				c.output(n1.first, n1.second)= ALMOST_WHITE;
+				ind = true;
+			}
+		}
+	}
 
-    return ind;
+	if (c.output(n2.first, n2.second) == 0 && c.magnitude[n2.first][n2.second] > lower_threshold) {
+		if (c.angles[n2.first][n2.second] == angle) {
+			if (is_maximum(c, n2)) {
+				c.output(n2.first, n2.second)= ALMOST_WHITE;
+				ind = true;
+			}
+		}
+	}
+
+	return ind;
 }
 
 // 5x5 gaussian filter with standard deviation 1.4
-static void gaussian_blur_help(const img::Image<img::Type::GRAYSCALE>& img, img::Image<img::Type::GRAYSCALE>& output, const std::vector<float>& gauss, int from, int to)
+static void gaussian_blur_help(canny_output& c, const std::vector<float>& gauss, int from, int to)
 {
-    for (int i = from; i < to; ++i) {
-        for (int j = 0; j < img.cols()-4; ++j) {
-            std::vector<float> current;
-            current.reserve(25);
-            for (int x = 0; x < 5; ++x) {
-                for (int y = 0; y < 5; ++y) {
-                    current.push_back(img(i+x, j+y));
-                }
-            }
+	for (int i = from; i < to; ++i) {
+		for (int j = 0; j < c.img.cols()-4; ++j) {
+			std::vector<float> current;
+			current.reserve(25);
+			for (int x = 0; x < 5; ++x) {
+				for (int y = 0; y < 5; ++y) {
+					current.push_back(c.img(i+x, j+y));
+				}
+			}
 
-            int s = std::inner_product(gauss.cbegin(), gauss.cend(), current.cbegin(), 0.0);
+			int s = std::inner_product(gauss.cbegin(), gauss.cend(), current.cbegin(), 0.0);
 
-            output(i+2, j+2) = s;
-        }
-    }
+			c.output(i+2, j+2) = s;
+		}
+	}
 }
 
-static img::Image<img::Type::GRAYSCALE> gaussian_blur(const img::Image<img::Type::GRAYSCALE>& img)
+static void gaussian_blur(canny_output& c)
 {
-    img::Image<img::Type::GRAYSCALE> output(img.rows(), img.cols());
-    std::vector<float> gauss
-        {2.0/159, 4.0/159, 5.0/159, 4.0/159, 2.0/159,
-        4.0/159, 9.0/159, 12.0/159, 9.0/159, 4.0/159,
-        5.0/159, 12.0/159, 15.0/159, 12.0/159, 5.0/159,
-        4.0/159, 9.0/159, 12.0/159, 9.0/159, 4.0/159,
-        2.0/159, 4.0/159, 5.0/159, 4.0/159, 2.0/159};
+	std::vector<float> gauss
+		{2.0/159, 4.0/159, 5.0/159, 4.0/159, 2.0/159, 
+		4.0/159, 9.0/159, 12.0/159, 9.0/159, 4.0/159,
+		5.0/159, 12.0/159, 15.0/159, 12.0/159, 5.0/159,
+		4.0/159, 9.0/159, 12.0/159, 9.0/159, 4.0/159,
+		2.0/159, 4.0/159, 5.0/159, 4.0/159, 2.0/159};
 
-    start_threads(0, img.rows()-4, gaussian_blur_help, img, output, gauss);
-
-    return output;
+	img::start_threads(0, c.img.rows()-4, gaussian_blur_help, c, gauss);
 }
 
 // Get gradient directions and magnitude.
-static void sobel_operator_help(const img::Image<img::Type::GRAYSCALE>& img,std::vector<std::vector<float>>& magnitude, std::vector<std::vector<float>>& angles, int from, int to)
+static void sobel_operator_help(canny_output& c, int from, int to)
 {
-    std::vector<int> GX{-1, 0, 1, -2, 0, 2, -1, 0, 1};
-    std::vector<int> GY{-1, -2, -1, 0, 0, 0, 1, 2, 1};
+	std::vector<int> GX{-1, 0, 1, -2, 0, 2, -1, 0, 1};
+	std::vector<int> GY{-1, -2, -1, 0, 0, 0, 1, 2, 1};
 
-    for (int i = from; i < to; ++i) {
-        for (int j = 0; j < img.cols()-2; ++j) {
-            std::vector<int> current{img(i,j), img(i,j+1), img(i,j+2), img(i+1,j), img(i+1,j+1), img(i+1,j+2), img(i+2,j), img(i+2,j+1), img(i+2,j+2)};
+	for (int i = from; i < to; ++i) {
+		for (int j = 0; j < c.img.cols()-2; ++j) {
+			std::vector<int> current{c.output(i,j), c.output(i,j+1), c.output(i,j+2), c.output(i+1,j), c.output(i+1,j+1), c.output(i+1,j+2), c.output(i+2,j), c.output(i+2,j+1), c.output(i+2,j+2)};
 
-            int sx = std::inner_product(GX.cbegin(), GX.cend(), current.cbegin(), 0);
-            int sy = std::inner_product(GY.cbegin(), GY.cend(), current.cbegin(), 0);
+			int sx = std::inner_product(GX.cbegin(), GX.cend(), current.cbegin(), 0);
+			int sy = std::inner_product(GY.cbegin(), GY.cend(), current.cbegin(), 0);
 
-            magnitude[i+1][j+1] = std::sqrt(sx*sx+sy*sy);
+			c.magnitude[i+1][j+1] = std::sqrt(sx*sx+sy*sy);
 
-            float theta = std::atan(sy/(double)sx) * 180 / pi;
-            if (theta < 0) theta += 180;
+			float theta = std::atan(sy/(double)sx) * 180 / pi;
+			if (theta < 0) theta += 180;
 
-            // get gradient direction - there are only 4 directions
-            // a line is always perpendicular to the gradient direction
-
-            angles[i+1][j+1] = (theta > 112.5 && theta <= 157.5) ? 135
-                                : (theta > 67.5 && theta <= 112.5) ? 90
-                                : (theta > 22.5 && theta <= 67.5) ? 45
-                                : 0;
-        }
-    }
+			// get gradient direction - there are only 4 directions
+			// a line is always perpendicular to the gradient direction
+			
+			c.angles[i+1][j+1] = (theta > 112.5 && theta <= 157.5) ? 135
+								: (theta > 67.5 && theta <= 112.5) ? 90
+								: (theta > 22.5 && theta <= 67.5) ? 45
+								: 0;
+		}
+	}
 }
 
 
-
-static std::pair<std::vector<std::vector<float>>, std::vector<std::vector<float>>> sobel_operator(const img::Image<img::Type::GRAYSCALE>& img)
+static void sobel_operator(canny_output& c)
 {
-    std::vector<std::vector<float>> magnitude(img.rows(), std::vector<float>(img.cols(), 0));
-    std::vector<std::vector<float>> angles(img.rows(), std::vector<float>(img.cols(), 0));
-
-    start_threads(0, img.rows()-2, sobel_operator_help, img, magnitude, angles);
-    return {magnitude, angles};
+	img::start_threads(0, c.img.rows()-2, sobel_operator_help, c);
 }
 
 // mark pixels as edges (ALMOST_WHITE) if they satisfy conditions
-static void nonmaximum_supression_help(img::Image<img::Type::GRAYSCALE>& output, const std::vector<std::vector<float>>& magnitude, const std::vector<std::vector<float>>& angles, int upper_threshold, int from, int to)
+static void nonmaximum_supression_help(canny_output& c, int upper_threshold, int from, int to)
 {
-    for (int i = from; i < to; ++i) {
-        for (int j = 1; j < output.cols()-1; ++j) {
-            output(i, j) = (magnitude[i][j] >= upper_threshold && is_maximum(i,j,magnitude,angles)) ? ALMOST_WHITE : img::BLACK;
-        }
-    }
-    // remark: we start from 1 because is_maximum access neighbours (+1, -1) and we don't want to check indices (it is faster)
+	for (int i = from; i < to; ++i) {
+		for (int j = 1; j < c.output.cols()-1; ++j) {
+			c.output(i, j) = (c.magnitude[i][j] >= upper_threshold && is_maximum(c, {i, j})) ? ALMOST_WHITE : img::BLACK;
+		}
+	}
+	// remark: we start from 1 because is_maximum access neighbours (+1, -1) and we don't want to check indices (it is faster)
 }
 
 
-static void nonmaximum_supression(img::Image<img::Type::GRAYSCALE>& output, const std::vector<std::vector<float>>& magnitude, const std::vector<std::vector<float>>& angles, int upper_threshold)
+static void nonmaximum_supression(canny_output& c, int upper_threshold)
 {
-    start_threads(1, output.rows()-1, nonmaximum_supression_help, output, magnitude, angles, upper_threshold);
+	img::start_threads(1, c.output.rows()-1, nonmaximum_supression_help, c, upper_threshold);
 }
 
 // "grow" lines
-static void hysteresis_help(img::Image<img::Type::GRAYSCALE>& output, const std::vector<std::vector<float>>&  magnitude, const std::vector<std::vector<float>>& angles, int lower_threshold, bool& change, int from, int to)
+static void hysteresis_help(canny_output& c, int lower_threshold, bool& change, int from, int to)
 {
-    for (int i = from; i < to; ++i) {
-        for (int j = 2; j < output.cols()-2; ++j) {
-            // if pixel is marked as an edge
-            if (output(i,j) == ALMOST_WHITE) {
+	for (int i = from; i < to; ++i) {
+		for (int j = 2; j < c.output.cols()-2; ++j) {
+			// if pixel is marked as an edge
+			if (c.output(i,j) == ALMOST_WHITE) {
 
-                // we definitely color marked pixel so we wouldn't check it any more
-                output(i,j) = img::WHITE;
-
-                // try to mark neighbours as edge
-                if (check_neighbours(output, i, j, magnitude, angles, lower_threshold))
-                    change = true;
-            }
-        }
-    }
-    // remark: we start from 2 because check_neighbours access neighbours (+2, -2) and we don't want to check indices (it is faster)
+				// we definitely color marked pixel so we wouldn't check it any more
+				c.output(i,j) = img::WHITE;
+				
+				// try to mark neighbours as edge
+				if (check_neighbours(c, {i, j}, lower_threshold))
+					change = true;
+			}
+		}
+	}
+	// remark: we start from 2 because check_neighbours access neighbours (+2, -2) and we don't want to check indices (it is faster)
 }
 
-static void hysteresis(img::Image<img::Type::GRAYSCALE>& output, const std::vector<std::vector<float>>&  magnitude, const std::vector<std::vector<float>>& angles, int lower_threshold)
+static void hysteresis(canny_output& c, int lower_threshold)
 {
-    bool change = true;
+	bool change = true;
 
-    while (change) {
-        change = false;
+	while (change) {
+		change = false;
 
-        start_threads(2, output.rows()-2, hysteresis_help, output, magnitude, angles, lower_threshold, change);
-    }
+		img::start_threads(2, c.output.rows()-2, hysteresis_help, c, lower_threshold, change);
+	}
 }
 
 
 img::Image<img::Type::GRAYSCALE> canny(const img::Image<img::Type::GRAYSCALE>& img, int lower_threshold, int upper_threshold)
 {
-    // get rid of a noise
-    auto output = gaussian_blur(img);
+	canny_output c(img);
+	gaussian_blur(c);
+	sobel_operator(c);
+	nonmaximum_supression(c, upper_threshold);
+	hysteresis(c, lower_threshold);
 
-    auto [magnitude, angles] = sobel_operator(output);
-    nonmaximum_supression(output, magnitude, angles, upper_threshold);
-    hysteresis(output, magnitude, angles, lower_threshold);
+	for (int i = 0; i < c.output.rows(); i++) {
+		for (int j = 0; j < 4; j++) {
+			c.output(i, j) = c.output(i, c.output.cols()-1-j) = img::Color::BLACK;
+		}
+	}
 
-    for (int i = 0; i < output.rows(); i++) {
-        for (int j = 0; j < 4; j++) {
-            output(i, j) = img::Color::BLACK;
-            output(i, output.cols()-1-j) = img::Color::BLACK;
-        }
-    }
+	for (int j = 0; j < c.output.cols(); j++) {
+		for (int i = 0; i < 4; i++) {
+			c.output(i, j) = c.output(c.output.rows()-1-i, j) = img::Color::BLACK;
+		}
+	}
 
-    for (int j = 0; j < output.cols(); j++) {
-        for (int i = 0; i < 4; i++) {
-            output(i, j) = img::Color::BLACK;
-            output(output.rows()-1-i, j) = img::Color::BLACK;
-        }
-    }
-
-    return output;
+	return c.output;
 }
-
-#include <thread>

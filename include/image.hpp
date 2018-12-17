@@ -6,9 +6,27 @@
 #include <iostream>
 #include <experimental/filesystem>
 #include <numeric>
+#include <string>
+#include <thread>
+#include <future>
 
 
 namespace img {
+
+	template <typename Function, typename... Args>
+	void start_threads(int start, int end, Function&& func, Args&&... args)
+	{
+		int num_threads = 4; // don't do this
+		std::vector<std::future<void>> threads(num_threads);
+		int rows = end;
+		for (int i = 0; i < num_threads; i++) {
+			int from = std::max(rows/num_threads * i, start);
+			int to = (i==num_threads-1) ? rows : from + rows/num_threads;
+			// should func be forwarded?
+			// caution - from and to mustn't be captured with &
+			threads[i] = std::async([&,from,to]{ std::forward<Function>(func)(std::forward<Args>(args)..., from, to); });
+		}
+	}
 
 	enum class Type { GRAYSCALE, RGB };
 	enum Color { BLACK = 0, WHITE = 255 };
@@ -18,27 +36,69 @@ namespace img {
 	class Image {
 	private:
 		std::string m_name;
-		cv::Mat m_data;
+        cv::Mat m_data;
 
 	public:
-		Image(const std::experimental::filesystem::path& path);
-		Image(unsigned rows = 0, unsigned cols = 0);
+        Image(const std::experimental::filesystem::path& path);
+        Image(unsigned rows = 0, unsigned cols = 0, std::string name = "");
 		Image(const cv::Mat& data)
-			: m_data(data)
-		{}
+			: m_name(), m_data(data)
+        {}
 
-		Image(const Image& other)
-			: m_name(other.m_name), m_data(other.m_data.clone())
-		{}
+        Image(cv::Mat&& data)
+            : m_name(), m_data(std::move(data))
+        {}
+
+        Image(const Image& other)
+            : m_name(other.m_name), m_data(other.m_data.clone())
+        {}
+
+        // we need this because we have defined copy constructor
+        Image(Image&& other) = default;
+        Image& operator=(const Image& other) = default;
+        Image& operator=(Image&& other) = default;
+
+        std::string name() const
+        {
+            return m_name;
+        }
+
+        std::string purename() const
+        {
+            return std::string(m_name.cbegin(),
+                               std::find(m_name.cbegin(), m_name.cend(), '.'));
+        }
+
+        void set_name(std::string name)
+        {
+            m_name = std::move(name);
+        }
 
 		operator bool() const
 		{
 			return !m_data.empty();
 		}
 
+        void bgr2rgb();
+
+        uchar* data() const
+        {
+            return m_data.data;
+        }
+
+        img::Type type() const
+        {
+            return t;
+        }
+
+        int step() const
+        {
+            return m_data.step;
+        }
+
 		bool in_range(int x, int y) const
 		{
-			return x >= 0 && x < (int)rows() && y >= 0 && y < (int)cols();
+            return x >= 0 && x < rows() && y >= 0 && y < cols();
 		}
 
 		std::pair<int, int> dimension() const
@@ -73,18 +133,18 @@ namespace img {
 			return cols()/(double)rows();
 		}
 
-		Image<t> resize(int width, int height) const
+        Image<t> resize(int width, int height) const
 		{
-			cv::Size size(width, height);
 			cv::Mat dst;
-			cv::resize(m_data, dst, size);
-			return Image<t>(dst);
+            cv::resize(m_data, dst, cv::Size(width, height), 0, 0, cv::INTER_AREA);
+            return Image<t>(std::move(dst));
 		}
 
-		Image<t> resize(int width) const
-		{
-			return resize(width, width/get_aspect_ratio());
-		}
+        Image<t> resize(int width) const
+        {
+            return resize(width, width/get_aspect_ratio());
+        }
+
 
 		Image<t> resize(const Image& image) const
 		{
@@ -99,17 +159,14 @@ namespace img {
 		}
 
 		unsigned pixel_sum(unsigned i, unsigned j) const;
-		
-		unsigned red(unsigned i, unsigned j) const;
-		unsigned green(unsigned i, unsigned j) const;
-		unsigned blue(unsigned i, unsigned j) const;
 
 		std::conditional_t<t==Type::RGB, cv::Vec3b, unsigned char>& operator()(unsigned i, unsigned j);
 		const std::conditional_t<t==Type::RGB, cv::Vec3b, unsigned char>& operator()(unsigned i, unsigned j) const;
 
 		void save(const std::experimental::filesystem::path& path) const
 		{
-			imwrite(path.string(), m_data);
+            if (!path.empty() && !m_data.empty())
+                imwrite(path.string(), m_data);
 		}
 
 		std::conditional_t<t==Type::RGB, cv::MatIterator_<cv::Vec3b>, cv::MatIterator_<unsigned char>> begin();
@@ -121,170 +178,6 @@ namespace img {
 		Image<Type::GRAYSCALE> grayscale() const;
 		Image<Type::GRAYSCALE> black_white() const;
 	};
-
-	template <>
-	Image<Type::RGB>::Image(const std::experimental::filesystem::path& path)
-		: m_name(path.filename()), m_data(cv::imread(path.string(), cv::IMREAD_COLOR))
-	{
-	}
-
-	template <>
-	Image<Type::GRAYSCALE>::Image(const std::experimental::filesystem::path& path)
-		: m_name(path.filename()), m_data(cv::imread(path.string(), cv::IMREAD_GRAYSCALE))
-	{
-	}
-
-	template <>
-	Image<Type::RGB>::Image(unsigned rows, unsigned cols)
-		: m_data(cv::Mat(rows, cols, CV_8UC3, cv::Scalar(Color::WHITE, Color::WHITE, Color::WHITE)))
-	{
-	}
-
-	template <>
-	Image<Type::GRAYSCALE>::Image(unsigned rows, unsigned cols)
-		: m_data(cv::Mat(rows, cols, CV_8UC1, cv::Scalar(Color::WHITE)))
-	{
-	}
-
-	template<>
-	cv::MatIterator_<cv::Vec3b> Image<Type::RGB>::begin()
-	{
-		return m_data.begin<cv::Vec3b>();
-	}
-
-	template<>
-	cv::MatIterator_<unsigned char> Image<Type::GRAYSCALE>::begin()
-	{
-		return m_data.begin<unsigned char>();
-	}
-
-	template<>
-	cv::MatIterator_<cv::Vec3b> Image<Type::RGB>::end()
-	{
-		return m_data.end<cv::Vec3b>();
-	}
-
-	template<>
-	cv::MatIterator_<unsigned char> Image<Type::GRAYSCALE>::end()
-	{
-		return m_data.end<unsigned char>();
-	}
-
-	template<>
-	cv::MatConstIterator_<cv::Vec3b> Image<Type::RGB>::cbegin() const
-	{
-		return m_data.begin<cv::Vec3b>();
-	}
-
-	template<>
-	cv::MatConstIterator_<unsigned char> Image<Type::GRAYSCALE>::cbegin() const
-	{
-		return m_data.begin<unsigned char>();
-	}
-
-	template<>
-	cv::MatConstIterator_<cv::Vec3b> Image<Type::RGB>::cend() const
-	{
-		return m_data.end<cv::Vec3b>();
-	}
-
-	template<>
-	cv::MatConstIterator_<unsigned char> Image<Type::GRAYSCALE>::cend() const
-	{
-		return m_data.end<unsigned char>();
-	}
-
-
-	template<>
-	cv::Vec3b& Image<Type::RGB>::operator()(unsigned i, unsigned j)
-	{
-		return m_data.at<cv::Vec3b>(i,j);
-	}
-
-	template<>
-	unsigned char& Image<Type::GRAYSCALE>::operator()(unsigned i, unsigned j)
-	{
-		return m_data.at<unsigned char>(i,j);
-	}
-
-	template<>
-	const cv::Vec3b& Image<Type::RGB>::operator()(unsigned i, unsigned j) const
-	{
-		return m_data.at<cv::Vec3b>(i,j);
-	}
-
-	template<>
-	const unsigned char& Image<Type::GRAYSCALE>::operator()(unsigned i, unsigned j) const
-	{
-		return m_data.at<unsigned char>(i,j);
-	}
-
-	template<>
-	unsigned Image<Type::RGB>::pixel_sum(unsigned i, unsigned j) const
-	{
-		auto& x = m_data.at<cv::Vec3b>(i, j);
-		return x[R] + x[G] + x[B];
-	}
-
-	template<>
-	unsigned Image<Type::RGB>::red(unsigned i, unsigned j) const
-	{
-		return m_data.at<cv::Vec3b>(i, j)[R];
-	}
-
-	template<>
-	unsigned Image<Type::RGB>::green(unsigned i, unsigned j) const
-	{
-		return m_data.at<cv::Vec3b>(i, j)[G];
-	}
-
-	template<>
-	unsigned Image<Type::RGB>::blue(unsigned i, unsigned j) const
-	{
-		return m_data.at<cv::Vec3b>(i, j)[B];
-	}
-
-	template<>
-	unsigned Image<Type::GRAYSCALE>::pixel_sum(unsigned i, unsigned j) const
-	{
-		return m_data.at<unsigned char>(i,j);
-	}
-
-	template<>
-	Image<Type::GRAYSCALE> Image<Type::RGB>::grayscale() const
-	{
-		img::Image<img::Type::GRAYSCALE> gray(rows(), cols());
-
-		for (int i = 0; i < rows(); i++) {
-			for (int j = 0; j < cols(); j++) {
-				gray(i, j) = std::round(0.299*(*this)(i, j)[R] + 0.587*(*this)(i, j)[G] + 0.114*(*this)(i, j)[B]);
-			}
-		}
-
-		return gray;
-	}
-
-	template<>
-	Image<Type::GRAYSCALE> Image<Type::GRAYSCALE>::black_white() const
-	{
-		img::Image<img::Type::GRAYSCALE> result(rows(), cols());
-
-		double threshold = (double)std::accumulate(cbegin(), cend(), 0) / (rows()*cols());
-
-		for (int i = 0; i < rows(); i++) {
-			for (int j = 0; j < cols(); j++) {
-				result(i, j) = (pixel_sum(i, j) < threshold) ? Color::BLACK : Color::WHITE;
-			}
-		}
-
-		return result;
-	}
-
-	template<>
-	Image<Type::GRAYSCALE> Image<Type::RGB>::black_white() const
-	{
-		return grayscale().black_white();
-	}
 
 }; // end of namespace img
 #endif /* IMAGE_HPP */

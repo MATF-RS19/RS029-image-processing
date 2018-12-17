@@ -7,9 +7,26 @@
 #include <experimental/filesystem>
 #include <numeric>
 #include <string>
+#include <thread>
+#include <future>
 
 
 namespace img {
+
+	template <typename Function, typename... Args>
+	void start_threads(int start, int end, Function&& func, Args&&... args)
+	{
+		int num_threads = 4; // don't do this
+		std::vector<std::future<void>> threads(num_threads);
+		int rows = end;
+		for (int i = 0; i < num_threads; i++) {
+			int from = std::max(rows/num_threads * i, start);
+			int to = (i==num_threads-1) ? rows : from + rows/num_threads;
+			// should func be forwarded?
+			// caution - from and to mustn't be captured with &
+			threads[i] = std::async([&,from,to]{ std::forward<Function>(func)(std::forward<Args>(args)..., from, to); });
+		}
+	}
 
 	enum class Type { GRAYSCALE, RGB };
 	enum Color { BLACK = 0, WHITE = 255 };
@@ -25,11 +42,11 @@ namespace img {
         Image(const std::experimental::filesystem::path& path);
         Image(unsigned rows = 0, unsigned cols = 0, std::string name = "");
 		Image(const cv::Mat& data)
-			: m_data(data)
+			: m_name(), m_data(data)
         {}
 
         Image(cv::Mat&& data)
-            : m_data(std::move(data))
+            : m_name(), m_data(std::move(data))
         {}
 
         Image(const Image& other)

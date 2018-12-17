@@ -13,29 +13,6 @@ void set_picture(const std::vector<std::vector<float>>& m1, const std::vector<st
 	for (int i = from; i < to; i++) {
 		for (int j = 0; j < img.cols(); j++) {
 			img(i,j) = (m1[i][j]>m2[i][j]) ? img::WHITE : img::BLACK;
-			// if (m1[i][j]>0.9) {
-			// 	binary(i,j)=img::WHITE;
-			// }
-			// else {
-			// 	float median;
-			// 	if (i==0 || j==0 || i==rows-1 || j==cols-j)
-			// 		median = m1[i][j];
-			// 	else {
-			// 		std::vector<float> v;
-			// 		for (int a = -1; a <= 1; a++) {
-			// 			for (int b = -1; b <= 1; b++) {
-			// 				v.push_back(m1[i+a][j+b]);
-			// 			}
-			// 		}
-			// 		std::sort(v.begin(), v.end());
-			// 		median = v[4];
-			// 	}
-
-			// 	if (median > m2[i][j])
-			// 		binary(i,j)=img::WHITE;
-			// 	else
-			// 		binary(i,j)=img::BLACK;
-			// }
 		}
 	}
 }
