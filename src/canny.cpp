@@ -256,15 +256,15 @@ img::Image<img::Type::GRAYSCALE> canny(const img::Image<img::Type::GRAYSCALE>& i
 int main()
 {
 	auto tstart = std::time(0);
-	// for (int i = 0; i < 30; i++) {
-	img::Image<img::Type::GRAYSCALE> img("images/sobel.png");
+	for (int i = 0; i < 10; i++) {
+	img::Image<img::Type::GRAYSCALE> img("images/blackboard.jpg");
 	if (!img) return -1;
 		auto output = canny(img);
-	// }
+	}
 
-	output.show();
-	cv::waitKey(0);
-	output.save("canny_detector.png");
+	// output.show();
+	// cv::waitKey(0);
+	// output.save("canny_detector.png");
 	std::cout << std::time(0)-tstart << std::endl;
 
     return 0;

@@ -3,128 +3,158 @@
 #include <cmath>
 #include <mutex>
 
-static float m = 2;
-static std::mutex mu; 
 
-void set_picture(const std::vector<std::vector<float>>& m1, const std::vector<std::vector<float>>& m2,
-		img::Image<img::Type::GRAYSCALE>& img, int from, int to)
-{
-	for (int i = from; i < to; i++) {
-		for (int j = 0; j < img.cols(); j++) {
-			img(i,j) = (m1[i][j]>m2[i][j]) ? img::WHITE : img::BLACK;
-		}
+class fcm {
+public:
+	fcm(const img::Image<img::Type::GRAYSCALE>& img)
+		: m_img(img),
+		  m_output(img.rows(), img.cols()),
+		  m1(img.rows(), std::vector<float>(img.cols(), 0)),
+		  m2(img.rows(), std::vector<float>(img.cols(), 0))
+	{
+		init_m();
 	}
-}
 
-void init_m(std::vector<std::vector<float>>& m1, std::vector<std::vector<float>>& m2,
-		const img::Image<img::Type::GRAYSCALE>& img, int from, int to)
-{
-	for (int i = from; i < to; i++) {
-		for (int j = 0; j < img.cols(); j++) {
-			m1[i][j] = img(i,j)/255.0;
-			m2[i][j] = 1 - m1[i][j];
-		}
+	const img::Image<img::Type::GRAYSCALE>& binarize()
+	{
+		fuzzy_cluster_means();
+		img::start_threads(0, m_output.rows(), &fcm::set_output, this);
+		return m_output;
 	}
-}
 
+private:
+	const img::Image<img::Type::GRAYSCALE>& m_img;
+	img::Image<img::Type::GRAYSCALE> m_output;
+	std::vector<std::vector<float>> m1;
+	std::vector<std::vector<float>> m2;
+	double C1;
+	double C2;
+	std::mutex mu; 
 
-void centroids(double& C1, double& C2, double& m1_sum, double& m2_sum,
-		const std::vector<std::vector<float>>& m1, const std::vector<std::vector<float>>& m2,
-		const img::Image<img::Type::GRAYSCALE>& img, int from, int to)
-{
-	double m1_sum_tmp = 0;
-	double m2_sum_tmp = 0;
-	double C1_tmp = 0;
-	double C2_tmp = 0;
-
-	for (int i = from; i < to; i++) {
-		for (int j = 0; j < img.cols(); j++) {
-			double x = std::pow(m1[i][j], m);
-			C1_tmp += x*img(i,j);
-			m1_sum_tmp += x;
-
-			x = std::pow(m2[i][j], m);
-			C2_tmp += x*img(i,j);
-			m2_sum_tmp += x;
+	void init_m_help(int from, int to)
+	{
+		for (int i = from; i < to; i++) {
+			for (int j = 0; j < m_img.cols(); j++) {
+				m1[i][j] = m_img(i,j)/255.0;
+				m2[i][j] = 1 - m1[i][j];
+			}
 		}
 	}
 
-	std::lock_guard<std::mutex> lock(mu);
-	C1 += C1_tmp;
-	C2 += C2_tmp;
-	m1_sum += m1_sum_tmp;
-	m2_sum += m2_sum_tmp;
-}
-
-void update_m(double& sum_u, 
-		std::vector<std::vector<float>>& m1, std::vector<std::vector<float>>& m2,
-		double C1, double C2, const img::Image<img::Type::GRAYSCALE>& img, int from, int to)
-{
-	double sum_u_tmp = 0;
-
-	for (int i = from; i < to; i++) {
-		for (int j = 0; j < img.cols(); j++) {
-			float d1=((C1-img(i,j))*(C1-img(i,j)));
-			float d2=((C2-img(i,j))*(C2-img(i,j)));
-			float d_sq1 = 1.0/d1;
-			float d_sq2 = 1.0/d2;
-			float a = std::pow(d_sq1, 1.0/(m-1));
-			float b = std::pow(d_sq2, 1.0/(m-1));
-			sum_u_tmp += std::pow(m1[i][j]-a/(a+b),2) + std::pow(m2[i][j]-b/(a+b),2);
-
-			m1[i][j] = a/(a+b);
-			m2[i][j] = b/(a+b);
-		}
+	void init_m()
+	{
+		img::start_threads(0, m_img.rows(), &fcm::init_m_help, this);
 	}
 
-	std::lock_guard<std::mutex> lock(mu);
-	sum_u += sum_u_tmp;
-}
+	void centroids_help(double& m1_sum, double& m2_sum, int from, int to)
+	{
+		double m1_sum_tmp = 0;
+		double m2_sum_tmp = 0;
+		double C1_tmp = 0;
+		double C2_tmp = 0;
 
-int main()
-{
-	// img::Image<img::Type::GRAYSCALE> img("images/r2d2.jpg");
-	img::Image<img::Type::GRAYSCALE> img("images/blackboard.jpg");
-	// img::Image<img::Type::GRAYSCALE> img("images/storm_trooper.jpg");
-	// img::Image<img::Type::GRAYSCALE> img("images/mat.jpg");
+		for (int i = from; i < to; i++) {
+			for (int j = 0; j < m_img.cols(); j++) {
+				double x = m1[i][j]*m1[i][j];
+				C1_tmp += x*m_img(i,j);
+				m1_sum_tmp += x;
 
-	auto&& [rows, cols] = img.dimension();
+				x = m2[i][j]*m2[i][j];
+				C2_tmp += x*m_img(i,j);
+				m2_sum_tmp += x;
+			}
+		}
 
-	img::Image<img::Type::GRAYSCALE> binary(rows, cols);
+		std::lock_guard<std::mutex> lock(mu);
+		C1 += C1_tmp;
+		C2 += C2_tmp;
+		m1_sum += m1_sum_tmp;
+		m2_sum += m2_sum_tmp;
+	}
 
-	std::vector<std::vector<float>> m1(rows, std::vector<float>(cols, 0));
-	std::vector<std::vector<float>> m2(rows, std::vector<float>(cols, 0));
-
-	img::start_threads(0, rows, init_m, m1, m2, img);
-
-	double sum_u = 0;
-	int iter=0;
-
-
-	do {
-		++iter;
-
-		double C1 = 0;
-		double C2 = 0;
+	void centroids()
+	{
+		C1 = 0;
+		C2 = 0;
 		double m1_sum = 0;
 		double m2_sum = 0;
 
-		img::start_threads(0, rows, centroids, C1, C2, m1_sum, m2_sum, m1, m2, img);
+		img::start_threads(0, m_img.rows(), &fcm::centroids_help, this, m1_sum, m2_sum);
 
 		C1 /= m1_sum;
 		C2 /= m2_sum;
+	}
 
-		sum_u = 0;
 
-		img::start_threads(0, rows, update_m, sum_u, m1, m2, C1, C2, img);
+	void update_m_help(double& sum_u, int from, int to)
+	{
+		double sum_u_tmp = 0;
 
-		if (iter > 30) break;
-		// std::cout << C1 << std::endl;
-	} while(sum_u>1);
+		for (int i = from; i < to; i++) {
+			for (int j = 0; j < m_img.cols(); j++) {
+				float d1=(C1-m_img(i,j))*(C1-m_img(i,j));
+				float d2=(C2-m_img(i,j))*(C2-m_img(i,j));
+				float a = d2/(d1+d2);
+				float b = d1/(d1+d2);
+				sum_u_tmp += (m1[i][j]-a)*(m1[i][j]-a) + (m2[i][j]-b)*(m2[i][j]-b);
+				m1[i][j] = a;
+				m2[i][j] = b;
+			}
+		}
 
-	std::cout << "iterations: " << iter << std::endl;
+		std::lock_guard<std::mutex> lock(mu);
+		sum_u += sum_u_tmp;
+	}
 
-	img::start_threads(0, rows, set_picture, m1, m2, binary);
+	double update_m()
+	{
+		double sum_u = 0;
+		img::start_threads(0, m_img.rows(), &fcm::update_m_help, this, sum_u);
+		return sum_u;
+	}
+
+	void fuzzy_cluster_means()
+	{
+		int max_iter = 0;
+
+		do {
+			centroids();
+		} while(update_m() > 1 && ++max_iter < 30);
+	}
+
+	void set_output(int from, int to)
+	{
+		for (int i = from; i < to; i++) {
+			for (int j = 0; j < m_img.cols(); j++) {
+				m_output(i,j) = (m1[i][j] > m2[i][j]) ? img::WHITE : img::BLACK;
+			}
+		}
+	}
+};
+
+
+img::Image<img::Type::GRAYSCALE> binarization(const img::Image<img::Type::GRAYSCALE> img)
+{
+	return fcm(img).binarize();
+}
+
+
+int main()
+{
+
+	// auto tstart = std::time(0);
+	// img::Image<img::Type::GRAYSCALE> img("images/blackboard.jpg");
+	// if (!img) return -1;
+
+	// for (int i = 0; i < 50; i++) {
+	// 	// auto output = canny(img);
+	// 	auto binary = binarization(img);
+	// }
+	// std::cout << std::time(0)-tstart << std::endl;
+
+	img::Image<img::Type::GRAYSCALE> img("images/blackboard.jpg");
+
+	auto binary = binarization(img);
 
 	binary.show();
 	cv::waitKey(0);
