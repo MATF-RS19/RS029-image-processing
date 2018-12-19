@@ -3,7 +3,7 @@
 
 #include <QMainWindow>
 #include "image.hpp"
-#include "boost/variant.hpp"
+#include <variant>
 #include <QMouseEvent>
 #include <QVector>
 
@@ -22,8 +22,6 @@ private:
     void display_image(const auto& im);
 
 private slots:
-//    bool eventFilter(QObject *obj, QEvent *event);
-
     void on_openImageButton_clicked();
 
     void on_binarizeButton_clicked();
@@ -53,7 +51,7 @@ private:
     // input image
     img::Image<img::Type::RGB> im;
     // transformed image
-    boost::variant<img::Image<img::Type::RGB>, img::Image<img::Type::GRAYSCALE>> im_transformed;
+    std::variant<img::Image<img::Type::RGB>, img::Image<img::Type::GRAYSCALE>> im_transformed;
 
 };
 

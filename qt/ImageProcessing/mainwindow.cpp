@@ -6,7 +6,7 @@
 #include "pca.hpp"
 #include "canny.hpp"
 #include "image.hpp"
-#include "boost/variant.hpp"
+#include <variant>
 #include <QFileDialog>
 #include <QtGui>
 
@@ -84,7 +84,7 @@ void MainWindow::on_binarizeButton_clicked()
 
 void MainWindow::on_saveImageButton_clicked()
 {
-    boost::apply_visitor([this](auto&& i) {
+    std::visit([this](auto&& i) {
         if (!i) return;
         QString save_path = QFileDialog::getSaveFileName(this, ("Save File"), i.name().c_str(), ("Images (*.png *.xpm *.jpg)"));
         i.save(save_path.toStdString());

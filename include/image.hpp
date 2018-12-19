@@ -22,9 +22,8 @@ namespace img {
 		for (int i = 0; i < num_threads; i++) {
 			int from = std::max(rows/num_threads * i, start);
 			int to = (i==num_threads-1) ? rows : from + rows/num_threads;
-			// should func be forwarded?
 			// caution - from and to mustn't be captured with &
-			threads[i] = std::async([&,from,to]{ std::forward<Function>(func)(std::forward<Args>(args)..., from, to); });
+			threads[i] = std::async([&,from,to]{ std::invoke(std::forward<Function>(func), std::forward<Args>(args)..., from, to); });
 		}
 	}
 
