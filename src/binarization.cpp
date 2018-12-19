@@ -9,8 +9,8 @@ public:
 	fcm(const img::Image<img::Type::GRAYSCALE>& img)
 		: m_img(img),
 		  m_output(img.rows(), img.cols()),
-		  m1(img.rows(), std::vector<float>(img.cols(), 0)),
-		  m2(img.rows(), std::vector<float>(img.cols(), 0))
+		  m1(img.rows(), std::vector<int>(img.cols(), 0)),
+		  m2(img.rows(), std::vector<int>(img.cols(), 0))
 	{
 		init_m();
 	}
@@ -25,18 +25,18 @@ public:
 private:
 	const img::Image<img::Type::GRAYSCALE>& m_img;
 	img::Image<img::Type::GRAYSCALE> m_output;
-	std::vector<std::vector<float>> m1;
-	std::vector<std::vector<float>> m2;
-	double C1;
-	double C2;
+	std::vector<std::vector<int>> m1;
+	std::vector<std::vector<int>> m2;
+	unsigned long long C1;
+	unsigned long long C2;
 	std::mutex mu; 
 
 	void init_m_help(int from, int to)
 	{
 		for (int i = from; i < to; i++) {
 			for (int j = 0; j < m_img.cols(); j++) {
-				m1[i][j] = m_img(i,j)/255.0;
-				m2[i][j] = 1 - m1[i][j];
+				m1[i][j] = 10*m_img(i,j)/255;
+				m2[i][j] = 10 - m1[i][j];
 			}
 		}
 	}
@@ -46,16 +46,16 @@ private:
 		img::start_threads(0, m_img.rows(), &fcm::init_m_help, this);
 	}
 
-	void centroids_help(double& m1_sum, double& m2_sum, int from, int to)
+	void centroids_help(unsigned& m1_sum, unsigned& m2_sum, int from, int to)
 	{
-		double m1_sum_tmp = 0;
-		double m2_sum_tmp = 0;
-		double C1_tmp = 0;
-		double C2_tmp = 0;
+		unsigned m1_sum_tmp = 0;
+		unsigned m2_sum_tmp = 0;
+		unsigned long long C1_tmp = 0;
+		unsigned long long C2_tmp = 0;
 
 		for (int i = from; i < to; i++) {
 			for (int j = 0; j < m_img.cols(); j++) {
-				double x = m1[i][j]*m1[i][j];
+				int x = m1[i][j]*m1[i][j];
 				C1_tmp += x*m_img(i,j);
 				m1_sum_tmp += x;
 
@@ -64,6 +64,11 @@ private:
 				m2_sum_tmp += x;
 			}
 		}
+
+		C1_tmp /= 100;
+		C2_tmp /= 100;
+		m1_sum_tmp /= 100;
+		m2_sum_tmp /= 100;
 
 		std::lock_guard<std::mutex> lock(mu);
 		C1 += C1_tmp;
@@ -76,8 +81,8 @@ private:
 	{
 		C1 = 0;
 		C2 = 0;
-		double m1_sum = 0;
-		double m2_sum = 0;
+		unsigned m1_sum = 0;
+		unsigned m2_sum = 0;
 
 		img::start_threads(0, m_img.rows(), &fcm::centroids_help, this, m1_sum, m2_sum);
 
@@ -86,21 +91,23 @@ private:
 	}
 
 
-	void update_m_help(double& sum_u, int from, int to)
+	void update_m_help(unsigned& sum_u, int from, int to)
 	{
-		double sum_u_tmp = 0;
+		unsigned sum_u_tmp = 0;
 
 		for (int i = from; i < to; i++) {
 			for (int j = 0; j < m_img.cols(); j++) {
-				float d1=(C1-m_img(i,j))*(C1-m_img(i,j));
-				float d2=(C2-m_img(i,j))*(C2-m_img(i,j));
-				float a = d2/(d1+d2);
-				float b = d1/(d1+d2);
+				unsigned d1=(C1-m_img(i,j))*(C1-m_img(i,j));
+				unsigned d2=(C2-m_img(i,j))*(C2-m_img(i,j));
+				unsigned a = 10*d2/(d1+d2);
+				unsigned b = 10*d1/(d1+d2);
 				sum_u_tmp += (m1[i][j]-a)*(m1[i][j]-a) + (m2[i][j]-b)*(m2[i][j]-b);
 				m1[i][j] = a;
 				m2[i][j] = b;
 			}
 		}
+
+		sum_u_tmp /= 100;
 
 		std::lock_guard<std::mutex> lock(mu);
 		sum_u += sum_u_tmp;
@@ -108,7 +115,7 @@ private:
 
 	double update_m()
 	{
-		double sum_u = 0;
+		unsigned sum_u = 0;
 		img::start_threads(0, m_img.rows(), &fcm::update_m_help, this, sum_u);
 		return sum_u;
 	}
@@ -142,9 +149,9 @@ img::Image<img::Type::GRAYSCALE> binarization(const img::Image<img::Type::GRAYSC
 int main()
 {
 
-	// auto tstart = std::time(0);
 	// img::Image<img::Type::GRAYSCALE> img("images/blackboard.jpg");
 	// if (!img) return -1;
+	// auto tstart = std::time(0);
 
 	// for (int i = 0; i < 50; i++) {
 	// 	// auto output = canny(img);
