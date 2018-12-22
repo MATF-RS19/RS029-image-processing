@@ -31,6 +31,30 @@ Image<Type::GRAYSCALE>::Image(unsigned rows, unsigned cols, std::string name)
 {
 }
 
+template <>
+cv::MatIterator_<cv::Vec3b> Image<Type::RGB>::operator[](unsigned i)
+{
+    return m_data.begin<cv::Vec3b>() + i*cols();
+}
+
+template <>
+cv::MatIterator_<unsigned char> Image<Type::GRAYSCALE>::operator[](unsigned i)
+{
+    return m_data.begin<unsigned char>() + i*cols();
+}
+
+template<>
+cv::MatConstIterator_<cv::Vec3b> Image<Type::RGB>::operator[](unsigned i) const
+{
+    return m_data.begin<cv::Vec3b>() + i*cols();
+}
+
+template<>
+cv::MatConstIterator_<unsigned char> Image<Type::GRAYSCALE>::operator[](unsigned i) const
+{
+    return m_data.begin<unsigned char>() + i*cols();
+}
+
 template<>
 cv::MatIterator_<cv::Vec3b> Image<Type::RGB>::begin()
 {

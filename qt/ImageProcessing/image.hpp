@@ -9,7 +9,6 @@
 #include <string>
 #include <thread>
 #include <future>
-#include <functional>
 
 
 namespace img {
@@ -17,7 +16,7 @@ namespace img {
 	template <typename Function, typename... Args>
 	void start_threads(int start, int end, Function&& func, Args&&... args)
 	{
-		int num_threads = 4; // don't do this
+		int num_threads = std::thread::hardware_concurrency();
 		std::vector<std::future<void>> threads(num_threads);
 		int rows = end;
 		for (int i = 0; i < num_threads; i++) {
@@ -163,6 +162,7 @@ namespace img {
 		std::conditional_t<t==Type::RGB, cv::Vec3b, unsigned char>& operator()(unsigned i, unsigned j);
 		const std::conditional_t<t==Type::RGB, cv::Vec3b, unsigned char>& operator()(unsigned i, unsigned j) const;
 
+
 		void save(const std::experimental::filesystem::path& path) const
 		{
             if (!path.empty() && !m_data.empty())
@@ -174,6 +174,10 @@ namespace img {
 
 		std::conditional_t<t==Type::RGB, cv::MatConstIterator_<cv::Vec3b>, cv::MatConstIterator_<unsigned char>> cbegin() const;
 		std::conditional_t<t==Type::RGB, cv::MatConstIterator_<cv::Vec3b>, cv::MatConstIterator_<unsigned char>> cend() const;
+
+		std::conditional_t<t==Type::RGB, cv::MatIterator_<cv::Vec3b>, cv::MatIterator_<unsigned char>> operator[](unsigned i);
+		std::conditional_t<t==Type::RGB, cv::MatConstIterator_<cv::Vec3b>, cv::MatConstIterator_<unsigned char>> operator[](unsigned i) const;
+
 
 		Image<Type::GRAYSCALE> grayscale() const;
 		Image<Type::GRAYSCALE> black_white() const;
