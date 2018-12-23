@@ -20,14 +20,14 @@ Image<Type::GRAYSCALE>::Image(const std::experimental::filesystem::path& path)
 }
 
 template <>
-Image<Type::RGB>::Image(unsigned rows, unsigned cols, std::string name)
-    : m_name(std::move(name)), m_data(cv::Mat(rows, cols, CV_8UC3, cv::Scalar(Color::WHITE, Color::WHITE, Color::WHITE)))
+Image<Type::RGB>::Image(unsigned rows, unsigned cols, Color c, std::string name)
+    : m_name(std::move(name)), m_data(cv::Mat(rows, cols, CV_8UC3, cv::Scalar(c, c, c)))
 {
 }
 
 template <>
-Image<Type::GRAYSCALE>::Image(unsigned rows, unsigned cols, std::string name)
-    : m_name(std::move(name)), m_data(cv::Mat(rows, cols, CV_8UC1, cv::Scalar(Color::WHITE)))
+Image<Type::GRAYSCALE>::Image(unsigned rows, unsigned cols, Color c, std::string name)
+    : m_name(std::move(name)), m_data(cv::Mat(rows, cols, CV_8UC1, cv::Scalar(c)))
 {
 }
 
@@ -127,6 +127,32 @@ const unsigned char& Image<Type::GRAYSCALE>::operator()(unsigned i, unsigned j) 
 {
     return m_data.at<unsigned char>(i,j);
 }
+
+
+template<>
+cv::Vec3b& Image<Type::RGB>::operator()(const std::pair<unsigned, unsigned>& p)
+{
+    return m_data.at<cv::Vec3b>(p.first, p.second);
+}
+
+template<>
+unsigned char& Image<Type::GRAYSCALE>::operator()(const std::pair<unsigned, unsigned>& p)
+{
+    return m_data.at<unsigned char>(p.first, p.second);
+}
+
+template<>
+const cv::Vec3b& Image<Type::RGB>::operator()(const std::pair<unsigned, unsigned>& p) const
+{
+    return m_data.at<cv::Vec3b>(p.first, p.second);
+}
+
+template<>
+const unsigned char& Image<Type::GRAYSCALE>::operator()(const std::pair<unsigned, unsigned>& p) const
+{
+    return m_data.at<unsigned char>(p.first, p.second);
+}
+
 
 template<>
 unsigned Image<Type::RGB>::pixel_sum(unsigned i, unsigned j) const

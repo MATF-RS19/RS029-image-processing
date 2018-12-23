@@ -39,7 +39,7 @@ namespace img {
 
 	public:
         Image(const std::experimental::filesystem::path& path);
-        Image(unsigned rows = 0, unsigned cols = 0, std::string name = "");
+        Image(unsigned rows = 0, unsigned cols = 0, Color c = Color::WHITE, std::string name = "");
 		Image(const cv::Mat& data)
 			: m_name(), m_data(data)
         {}
@@ -79,6 +79,21 @@ namespace img {
 		}
 
         void bgr2rgb();
+
+		void set_borders(int thickness = 1, Color c = img::BLACK)
+		{
+			for (int i = 0; i < rows(); ++i) {
+				for (int j = 0; j < thickness; ++j) {
+					(*this)(i, j) = (*this)(i, cols()-1-j) = c;
+				}
+			}
+
+			for (int j = 0; j < cols(); j++) {
+				for (int i = 0; i < thickness; i++) {
+					(*this)(i, j) = (*this)(rows()-1-i, j) = c;
+				}
+			}
+		}
 
         uchar* data() const
         {
@@ -162,6 +177,8 @@ namespace img {
 		std::conditional_t<t==Type::RGB, cv::Vec3b, unsigned char>& operator()(unsigned i, unsigned j);
 		const std::conditional_t<t==Type::RGB, cv::Vec3b, unsigned char>& operator()(unsigned i, unsigned j) const;
 
+		std::conditional_t<t==Type::RGB, cv::Vec3b, unsigned char>& operator()(const std::pair<unsigned, unsigned>& p);
+		const std::conditional_t<t==Type::RGB, cv::Vec3b, unsigned char>& operator()(const std::pair<unsigned, unsigned>& p) const;
 
 		void save(const std::experimental::filesystem::path& path) const
 		{
