@@ -37,6 +37,8 @@ namespace img {
 		std::string m_name;
         cv::Mat m_data;
 
+		void gaussian_blur_help(Image<Type::GRAYSCALE>& output, const std::vector<float>& gauss, int from, int to) const;
+
 	public:
         Image(const std::experimental::filesystem::path& path);
         Image(unsigned rows = 0, unsigned cols = 0, Color c = Color::WHITE, std::string name = "");
@@ -91,6 +93,25 @@ namespace img {
 			for (int j = 0; j < cols(); j++) {
 				for (int i = 0; i < thickness; i++) {
 					(*this)(i, j) = (*this)(rows()-1-i, j) = c;
+				}
+			}
+		}
+
+		void set_borders(int thickness, const Image<t>& other)
+		{
+			if (dimension() != other.dimension()) return;
+
+			for (int i = 0; i < rows(); ++i) {
+				for (int j = 0; j < thickness; ++j) {
+					(*this)(i, j) = other(i,j);
+					(*this)(i, cols()-1-j) = other(i, cols()-1-j);
+				}
+			}
+
+			for (int j = 0; j < cols(); j++) {
+				for (int i = 0; i < thickness; i++) {
+					(*this)(i, j) = other(i, j);
+					(*this)(rows()-1-i, j) = other(rows()-1-i,j);
 				}
 			}
 		}
@@ -195,6 +216,8 @@ namespace img {
 		std::conditional_t<t==Type::RGB, cv::MatIterator_<cv::Vec3b>, cv::MatIterator_<unsigned char>> operator[](unsigned i);
 		std::conditional_t<t==Type::RGB, cv::MatConstIterator_<cv::Vec3b>, cv::MatConstIterator_<unsigned char>> operator[](unsigned i) const;
 
+		// 5x5 gaussian filter with standard deviation 1.4
+		Image<Type::GRAYSCALE> gaussian_blur() const;
 
 		Image<Type::GRAYSCALE> grayscale() const;
 		Image<Type::GRAYSCALE> black_white() const;

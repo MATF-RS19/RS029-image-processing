@@ -202,3 +202,43 @@ Image<Type::GRAYSCALE> Image<Type::RGB>::black_white() const
 {
     return grayscale().black_white();
 }
+
+// 5x5 gaussian filter with standard deviation 1.4
+template<>
+void Image<Type::GRAYSCALE>::gaussian_blur_help(Image<Type::GRAYSCALE>& output, const std::vector<float>& gauss, int from, int to) const
+{
+	const int gauss_filter_size = 5;
+	for (int i = from; i < to; ++i) {
+		for (int j = 0; j <= cols()-gauss_filter_size; ++j) {
+			std::vector<float> current;
+			current.reserve(gauss_filter_size*gauss_filter_size);
+			for (int x = 0; x < gauss_filter_size; ++x) {
+				for (int y = 0; y < gauss_filter_size; ++y) {
+					current.push_back((*this)(i+x, j+y));
+				}
+			}
+
+			output(i + gauss_filter_size/2, j + gauss_filter_size/2) = std::inner_product(gauss.cbegin(), gauss.cend(), current.cbegin(), 0.0);
+		}
+	}
+}
+
+template<>
+Image<Type::GRAYSCALE> Image<Type::GRAYSCALE>::gaussian_blur() const
+{
+	const int gauss_filter_size = 5;
+	const std::vector<float> gauss
+		{2.0/159, 4.0/159, 5.0/159, 4.0/159, 2.0/159, 
+		4.0/159, 9.0/159, 12.0/159, 9.0/159, 4.0/159,
+		5.0/159, 12.0/159, 15.0/159, 12.0/159, 5.0/159,
+		4.0/159, 9.0/159, 12.0/159, 9.0/159, 4.0/159,
+		2.0/159, 4.0/159, 5.0/159, 4.0/159, 2.0/159};
+
+	Image<Type::GRAYSCALE> output(rows(), cols());
+
+	img::start_threads(0, rows()-gauss_filter_size+1, &Image::gaussian_blur_help, this, output, gauss);
+
+	output.set_borders(gauss_filter_size/2, *this);
+
+	return output;
+}

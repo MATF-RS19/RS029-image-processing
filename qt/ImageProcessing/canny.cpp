@@ -17,7 +17,7 @@ public:
 
 	const img::Image<img::Type::GRAYSCALE>& canny(int lower_threshold = 20, int upper_threshold = 60)
 	{
-		gaussian_blur();
+		m_output = m_img.gaussian_blur();
 		sobel_operator();
 		nonmaximum_supression(upper_threshold);
 		hysteresis(lower_threshold);
@@ -30,43 +30,12 @@ public:
 private:
 	using pixel = std::pair<int,int>;
 	const int ALMOST_WHITE = 254;
-	const int gauss_filter_size = 5;
 	const int sobel_filter_size = 3;
 
 	std::vector<std::vector<float>> m_magnitude;
 	std::vector<std::vector<float>> m_angles;
 	img::Image<img::Type::GRAYSCALE> m_output;
 	const img::Image<img::Type::GRAYSCALE>& m_img;
-
-	// 5x5 gaussian filter with standard deviation 1.4
-	void gaussian_blur_help(const std::vector<float>& gauss, int from, int to)
-	{
-		for (int i = from; i < to; ++i) {
-			for (int j = 0; j <= m_img.cols()-gauss_filter_size; ++j) {
-				std::vector<float> current;
-				current.reserve(gauss_filter_size*gauss_filter_size);
-				for (int x = 0; x < gauss_filter_size; ++x) {
-					for (int y = 0; y < gauss_filter_size; ++y) {
-						current.push_back(m_img(i+x, j+y));
-					}
-				}
-
-				m_output(i + gauss_filter_size/2, j + gauss_filter_size/2) = std::inner_product(gauss.cbegin(), gauss.cend(), current.cbegin(), 0.0);
-			}
-		}
-	}
-
-	void gaussian_blur()
-	{
-		const std::vector<float> gauss
-			{2.0/159, 4.0/159, 5.0/159, 4.0/159, 2.0/159, 
-			4.0/159, 9.0/159, 12.0/159, 9.0/159, 4.0/159,
-			5.0/159, 12.0/159, 15.0/159, 12.0/159, 5.0/159,
-			4.0/159, 9.0/159, 12.0/159, 9.0/159, 4.0/159,
-			2.0/159, 4.0/159, 5.0/159, 4.0/159, 2.0/159};
-
-		img::start_threads(0, m_img.rows()-gauss_filter_size+1, &canny_detector::gaussian_blur_help, this, gauss);
-	}
 
 	// Get gradient directions and m_magnitude.
 	void sobel_operator_help(int from, int to)
@@ -245,9 +214,7 @@ private:
 
 
 
-img::Image<img::Type::GRAYSCALE> canny(const img::Image<img::Type::GRAYSCALE>& img, int lower_threshold, int upper_threshold)
+img::Image<img::Type::GRAYSCALE> canny(const img::Image<img::Type::GRAYSCALE>& img, int lower_threshold = 20, int upper_threshold = 60)
 {
 	return canny_detector(img).canny(lower_threshold, upper_threshold);
 }
-
-

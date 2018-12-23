@@ -4,68 +4,85 @@
 #include <thread>
 #include <mutex>
 
-static void gaussian_blur(img::Image<img::Type::GRAYSCALE>& img)
-{
-	std::vector<float> gauss
-		{2.0/159, 4.0/159, 5.0/159, 4.0/159, 2.0/159, 
-		4.0/159, 9.0/159, 12.0/159, 9.0/159, 4.0/159,
-		5.0/159, 12.0/159, 15.0/159, 12.0/159, 5.0/159,
-		4.0/159, 9.0/159, 12.0/159, 9.0/159, 4.0/159,
-		2.0/159, 4.0/159, 5.0/159, 4.0/159, 2.0/159};
+class fed {
+public:
+	fed(const img::Image<img::Type::GRAYSCALE>& img)
+		: m_img(img),
+		  m_mi(img.rows(), std::vector<unsigned>(img.cols(), 0))
+	{}
 
-	for (int i = 0; i < img.rows()-4; ++i) {
-		for (int j = 0; j < img.cols()-4; ++j) {
-			std::vector<float> current;
-			current.reserve(25);
-			for (int x = 0; x < 5; ++x) {
-				for (int y = 0; y < 5; ++y) {
-					current.push_back(img(i+x, j+y));
+	const img::Image<img::Type::GRAYSCALE>& detect(float threshold)
+	{
+		m_output = m_img.gaussian_blur();
+		defuzzification(update()*threshold);
+		return m_output;
+	}
+
+private:
+	img::Image<img::Type::GRAYSCALE> m_output;
+	const img::Image<img::Type::GRAYSCALE>& m_img;
+	std::vector<std::vector<unsigned>> m_mi;
+	const int L = 256;
+	std::mutex m_mutex;
+
+	void update_help(unsigned& maxm, int from, int to)
+	{
+		unsigned maxm_tmp = 0;
+		for (int i = from; i < to; i++) {
+			for (int j = 1; j < m_output.cols()-1; j++) {
+				unsigned s =0;
+				for (int x = -1; x <= 1; x++) {
+					for (int y = -1; y <= 1; y++) {
+						s+=std::abs(m_output(i,j)-m_output(i+x,j+y));
+					}
 				}
+				m_mi[i][j] = 1000*s/(s+(L-1));
+				maxm_tmp = std::max(maxm_tmp, m_mi[i][j]);
 			}
+		}
 
-			int s = std::inner_product(gauss.cbegin(), gauss.cend(), current.cbegin(), 0.0);
+		std::lock_guard<std::mutex> lock(m_mutex);
+		maxm = std::max(maxm, maxm_tmp);
+	}
 
-			img(i+2, j+2) = s;
+	unsigned update()
+	{
+		unsigned maxm = 0;
+		img::start_threads(1, m_output.rows()-1, &fed::update_help, this, maxm);
+		return maxm;
+	}
+
+	void defuzzification_help(unsigned limit, int from, int to)
+	{
+		for (int i = from; i < to; ++i) {
+			for (int j = 1; j < m_output.cols()-1; j++) {
+				// img(i,j)=(L-1)*mi[i][j]/1000;
+				m_output(i,j) = (m_mi[i][j] < limit) ? img::BLACK : img::WHITE;
+			}
 		}
 	}
+
+	void defuzzification(unsigned limit)
+	{
+		img::start_threads(1, m_output.rows()-1, &fed::defuzzification_help, this, limit);
+	}
+};
+
+
+img::Image<img::Type::GRAYSCALE> fuzzy_edge_detection(const img::Image<img::Type::GRAYSCALE>& img, float threshold)
+{
+	fed f(img);
+	return f.detect(threshold);
 }
 
 int main()
 {
-	// img::Image<img::Type::GRAYSCALE> img("images/r2d2.jpg");
-	// img::Image<img::Type::GRAYSCALE> img("images/sobel.png");
-	// img::Image<img::Type::GRAYSCALE> img("images/storm_trooper.jpg");
-	img::Image<img::Type::GRAYSCALE> img("images/blackboard.jpg");
+	img::Image<img::Type::GRAYSCALE> input("images/r2d2.jpg");
+	// img::Image<img::Type::GRAYSCALE> input("images/sobel.png");
+	// img::Image<img::Type::GRAYSCALE> input("images/storm_trooper.jpg");
+	// img::Image<img::Type::GRAYSCALE> input("images/blackboard.jpg");
 
-	gaussian_blur(img);
-	auto [rows, cols] = img.dimension();
-
-	std::vector<std::vector<double>> mi(rows, std::vector<double>(cols, 0));
-
-	int L=256;
-
-	double maxm=-1;
-
-	for (int i = 1; i < rows-1; i++) {
-		for (int j = 1; j < cols-1; j++) {
-			double s =0;
-			for (int x = -1; x <= 1; x++) {
-				for (int y = -1; y <= 1; y++) {
-					s+=std::abs(img(i,j)-img(i+x,j+y));
-				}
-			}
-			mi[i][j] = s/(s+(L-1));
-			maxm = std::max(maxm, mi[i][j]);
-		}
-	}
-
-	for (int i = 1; i < rows-1; i++) {
-		for (int j = 1; j < cols-1; j++) {
-			mi[i][j] /= maxm;
-			// img(i,j)=(L-1)*mi[i][j];
-			img(i,j) = (mi[i][j] < 0.35) ? img::BLACK : img::WHITE;
-		}
-	}
+	auto img = fuzzy_edge_detection(input, 0.15);
 
 	img.show();
 	cv::waitKey(0);
