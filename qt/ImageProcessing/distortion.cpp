@@ -125,8 +125,8 @@ img::Image<img::Type::RGB> distortion(const img::Image<img::Type::RGB>& image,
 	Eigen::Matrix3d P = P2*P1.inverse();
 	Eigen::Matrix3d PI = P.inverse();
 
-	for (unsigned i = 0; i < output.rows(); i++) {
-		for (unsigned j = 0; j < output.cols(); j++) {
+	for (int i = 0; i < output.rows(); i++) {
+		for (int j = 0; j < output.cols(); j++) {
 			Eigen::Vector3d w = PI*Eigen::Vector3d{1.0*i, 1.0*j, 1.0};
 
 			double x = (w(0)/w(2));

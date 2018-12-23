@@ -1,4 +1,4 @@
-#include "image.hpp"
+#include "canny.hpp"
 #include <vector>
 #include <numeric>
 
@@ -214,7 +214,7 @@ private:
 
 
 
-img::Image<img::Type::GRAYSCALE> canny(const img::Image<img::Type::GRAYSCALE>& img, int lower_threshold = 20, int upper_threshold = 60)
+img::Image<img::Type::GRAYSCALE> canny(const img::Image<img::Type::GRAYSCALE>& img, int lower_threshold, int upper_threshold)
 {
 	return canny_detector(img).canny(lower_threshold, upper_threshold);
 }

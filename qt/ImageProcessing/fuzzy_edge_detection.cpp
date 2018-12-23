@@ -1,4 +1,4 @@
-#include "image.hpp"
+#include "fuzzy_edge_detection.hpp"
 #include <iostream>
 #include <cmath>
 #include <thread>

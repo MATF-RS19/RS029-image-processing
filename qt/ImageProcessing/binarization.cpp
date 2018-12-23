@@ -1,4 +1,4 @@
-#include "image.hpp"
+#include "binarization.hpp"
 #include <iostream>
 #include <cmath>
 #include <mutex>
