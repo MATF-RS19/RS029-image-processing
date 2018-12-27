@@ -10,9 +10,11 @@ int main()
 	img::Image<img::Type::RGB> img("images/cars.jpg");
 	img::Image<img::Type::RGB> output(img.rows(), img.cols());
 
-	int k = 5;
+	int k = 10;
 	std::vector<cv::Vec3i> clusters(k);
-	std::fill(clusters.begin(), clusters.end(), RANDOM_PIXEL);
+	for (auto&& c : clusters) {
+		c = RANDOM_PIXEL;
+	}
 
 
 	for (int i = 0; i < MAX_ITER; i++) {
@@ -33,14 +35,18 @@ int main()
 		}
 
 		for (int j = 0; j < k; j++) {
-			new_clusters[j] /= counter[j];
+			if (counter[j] != 0)
+				new_clusters[j] /= counter[j];
 		}
 
-		if (std::inner_product(clusters.begin(), clusters.end(), new_clusters.begin(), 0, std::plus<>(), 
-			[](auto&& lhs, auto&& rhs) { return (lhs-rhs).dot(lhs-rhs); }) < 1)
+
+		unsigned eps = std::inner_product(clusters.begin(), clusters.end(), new_clusters.begin(), 0, std::plus<>(), [](auto&& lhs, auto&& rhs) { return (lhs-rhs).dot(lhs-rhs); });
+
+		if (eps < 1)
 			break;
 
 		clusters = std::move(new_clusters);
+		// std::cout << eps << std::endl; // strange convergence?!
 	}
 
 	output.show();
