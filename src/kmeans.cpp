@@ -1,35 +1,25 @@
 #include "image.hpp"
 #include <numeric>
 
-#define RAND (std::rand()%256)
-#define RANDOM_PIXEL (cv::Vec3i(RAND, RAND, RAND))
 #define MAX_ITER 100
 
 int main()
 {
-	std::srand(std::time(nullptr));
-	img::Image<img::Type::RGB> img("images/cars.jpg");
+	img::Image<img::Type::RGB> img("images/mat.jpg");
 	img::Image<img::Type::RGB> output(img.rows(), img.cols());
 
-	int k = 10;
+	int k = 7;
 	std::vector<cv::Vec3i> clusters(k);
 
-	cv::Vec3i avg;
-	for (cv::Vec3i p : img) {
-		avg += p;
-	}
-	avg /= (img.rows()*img.cols());
-	clusters[0] = avg;
+	clusters[0] = std::accumulate(img.begin(), img.end(), cv::Vec3i(0,0,0), [](cv::Vec3i s, cv::Vec3i i) { return s+i; }) / (img.rows()*img.cols());
+
 	for (int i = 1; i < k; i++) {
 		int maxd = 0;
 
 		for (cv::Vec3i p : img) {
-			int d = 999999999;
-			for (int j = 0; j < i; j++) {
-				if ((p-clusters[j]).dot(p-clusters[j]) < d) {
-					d = (p-clusters[j]).dot(p-clusters[j]);
-				}
-			}
+			auto it = std::min_element(clusters.begin(), clusters.begin()+i, [&p](auto&& a, auto&& b) { return (a-p).dot(a-p) < (b-p).dot(b-p); });
+
+			int d = (p-*it).dot(p-*it);
 
 			if (d > maxd) {
 				clusters[i] = p;
@@ -42,7 +32,6 @@ int main()
 		std::cout << p << std::endl;
 	}
 	std::cout << "----------------------" << std::endl;
-	// return 0;
 
 	for (int i = 0; i < MAX_ITER; i++) {
 		std::vector<cv::Vec3i> new_clusters(k, cv::Vec3i(0,0,0));
@@ -67,14 +56,14 @@ int main()
 		}
 
 
-		// unsigned eps = std::inner_product(img.begin(), img.end(), output.begin(), 0, std::plus<>(), [](auto&& lhs, auto&& rhs) { return (lhs-rhs).dot(lhs-rhs); });
 		unsigned eps = std::inner_product(clusters.begin(), clusters.end(), new_clusters.begin(), 0, std::plus<>(), [](auto&& lhs, auto&& rhs) { return (lhs-rhs).dot(lhs-rhs); });
 
-		if (eps < 1)
+		std::cout << eps << std::endl; // strange convergence?!
+
+		if (eps < 5)
 			break;
 
 		clusters = std::move(new_clusters);
-		std::cout << eps << std::endl; // strange convergence?!
 	}
 
 	output.show();
