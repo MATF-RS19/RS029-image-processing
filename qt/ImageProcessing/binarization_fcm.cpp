@@ -11,8 +11,7 @@ class fcm {
 public:
 	fcm(const img::Image<img::Type::GRAYSCALE>& img)
 		: m_img(img),
-		  m_output(img.rows(), img.cols()),
-		  m_w1(img.rows(), std::vector<int>(img.cols(), 0))
+		  m_output(img.rows(), img.cols())
 	{
 		fuzzification();
 	}
@@ -27,8 +26,6 @@ public:
 private:
 	const img::Image<img::Type::GRAYSCALE>& m_img;
 	img::Image<img::Type::GRAYSCALE> m_output;
-	// degree to which pixel (i,j) belongs to cluster 1
-	std::vector<std::vector<int>> m_w1;
 	// the centroid of a cluster 1
 	unsigned long long m_centroid_1;
 	// the centroid of a cluster 2
@@ -38,7 +35,7 @@ private:
 	void fuzzification_help(int from, int to)
 	{
 		for (int i = from; i < to; i++) {
-			std::transform(m_img[i], m_img[i]+m_img.cols(), m_w1[i].begin(), [](auto&& p) { return 10*p/255; });
+			std::transform(m_img[i], m_img[i]+m_img.cols(), m_output[i], [](auto&& p) { return 10*p/255; });
 		}
 	}
 
@@ -56,10 +53,10 @@ private:
 
 
 		for (int i = from; i < to; i++) {
-			denominator_1_tmp += std::inner_product(m_w1[i].begin(), m_w1[i].end(), m_w1[i].begin(), 0u);
-			denominator_2_tmp += std::inner_product(m_w1[i].begin(), m_w1[i].end(), m_w1[i].begin(), 0u, std::plus<>(), [](auto&& lhs, auto&& rhs) { return (10-lhs)*(10-rhs); });
-			centroid_1_tmp += std::inner_product(m_w1[i].begin(), m_w1[i].end(), m_img[i], 0ull, std::plus<>(), [](auto&& lhs, auto&& rhs) { return lhs*lhs*rhs; });
-			centroid_2_tmp += std::inner_product(m_w1[i].begin(), m_w1[i].end(), m_img[i], 0ull, std::plus<>(), [](auto&& lhs, auto&& rhs) { return (10-lhs)*(10-lhs)*rhs; });
+			denominator_1_tmp += std::inner_product(m_output[i], m_output[i+1], m_output[i], 0u);
+			denominator_2_tmp += std::inner_product(m_output[i], m_output[i+1], m_output[i], 0u, std::plus<>(), [](auto&& lhs, auto&& rhs) { return (10-lhs)*(10-rhs); });
+			centroid_1_tmp += std::inner_product(m_output[i], m_output[i+1], m_img[i], 0ull, std::plus<>(), [](auto&& lhs, auto&& rhs) { return lhs*lhs*rhs; });
+			centroid_2_tmp += std::inner_product(m_output[i], m_output[i+1], m_img[i], 0ull, std::plus<>(), [](auto&& lhs, auto&& rhs) { return (10-lhs)*(10-lhs)*rhs; });
 		}
 
 		centroid_1_tmp /= 100;
@@ -99,9 +96,9 @@ private:
 				unsigned d2 = (m_centroid_2-m_img(i,j))*(m_centroid_2-m_img(i,j));
 				unsigned a = std::round(10.0*d2/(d1+d2));
 
-				eps_tmp += (m_w1[i][j]-a)*(m_w1[i][j]-a);
+				eps_tmp += (m_output(i,j)-a)*(m_output(i,j)-a);
 
-				m_w1[i][j] = a;
+				m_output(i,j) = a;
 			}
 		}
 
@@ -130,7 +127,7 @@ private:
 	void defuzzification(int from, int to)
 	{
 		for (int i = from; i < to; i++) {
-			std::transform(m_w1[i].begin(), m_w1[i].end(), m_output[i], [](auto&& p) { return (p > 10-p) ? img::WHITE : img::BLACK; });
+			std::transform(m_output[i], m_output[i+1], m_output[i], [](auto&& p) { return (p > 10-p) ? img::WHITE : img::BLACK; });
 		}
 	}
 };
