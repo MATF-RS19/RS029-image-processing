@@ -167,11 +167,11 @@ img::Image<img::Type::RGB> color_quantization(const img::Image<img::Type::RGB>& 
 
 int main()
 {
-	img::Image<img::Type::RGB> img("images/cars.jpg");
+	img::Image<img::Type::RGB> img("images/blackboard.jpg");
 
 	auto tstart = std::time(0);
 	// for (int i = 0; i < 10; i++) {
-		auto output = color_quantization(img, 10);
+		auto output = color_quantization(img, 2);
 	// }
 	std::cout << std::time(0)-tstart << std::endl;
 

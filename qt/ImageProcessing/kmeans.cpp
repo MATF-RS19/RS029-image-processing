@@ -4,13 +4,12 @@
 #include <Eigen/Dense>
 
 typedef Eigen::Matrix<unsigned long long, 3, 1> vec3;
-// typedef cv::Vec3i vec3; // overflow problem
 
 class kmeans {
 public:
 	kmeans(const img::Image<img::Type::RGB>& img, int k, int maxiter = 100)
 		: m_img(img), m_output(m_img.rows(), m_img.cols()), m_centroids(std::vector<vec3>(k)),
-		m_maxiter(maxiter), m_f(0)
+        m_maxiter(maxiter)
 	{}
 
 	const img::Image<img::Type::RGB>& cluster()
@@ -22,11 +21,6 @@ public:
 		for (int i = 1; i < k; i++) {
 			set_centroid(i);
 		}
-
-		// for (auto&& p : m_centroids) {
-		// 	std::cout << p.transpose() << std::endl;
-		// }
-		// std::cout << "----------------------" << std::endl;
 
 		for (int i = 0; i < m_maxiter; i++) {
 			if (update() < 5)
@@ -46,8 +40,6 @@ private:
 	std::vector<vec3> m_centroids;
 	// maximum number of iteration
 	int m_maxiter;
-	// objective function value
-	unsigned long long m_f;
 
 	void avg_help(vec3& sum, int from, int to)
 	{
@@ -99,7 +91,6 @@ private:
 	void update_help(std::vector<vec3>& new_centroids, std::vector<int>& counter, int from, int to)
 	{
 		int k = m_centroids.size();
-		unsigned long long f_tmp = 0;
 		std::vector<vec3> new_centroids_tmp(k, vec3(0,0,0));
 		std::vector<int> counter_tmp(k, 0);
 
@@ -114,14 +105,12 @@ private:
 
 				m_output[x][y] = cv::Vec3b(m_centroids[m][0], m_centroids[m][1], m_centroids[m][2]);
 
-				f_tmp += (p-m_centroids[m]).dot(p-m_centroids[m]);
 				new_centroids_tmp[m] += p;
 				counter_tmp[m]++;
 			}
 		}
 
 		std::lock_guard<std::mutex> lock(m_mutex);
-		m_f += f_tmp;
 		for (int i = 0; i < k; i++) {
 			counter[i] += counter_tmp[i];
 			new_centroids[i] += new_centroids_tmp[i];
@@ -133,8 +122,6 @@ private:
 		int k = m_centroids.size();
 		std::vector<vec3> new_centroids(k, vec3(0,0,0));
 		std::vector<int> counter(k, 0);
-		// reset value of objective function
-		m_f = 0;
 		
 		img::start_threads(0, m_img.rows(), &kmeans::update_help, this, new_centroids, counter);
 
@@ -148,9 +135,6 @@ private:
 
 		// difference between centroids
 		unsigned long long eps = std::inner_product(m_centroids.begin(), m_centroids.end(), new_centroids.begin(), 0ull, std::plus<>(), [](auto&& lhs, auto&& rhs) { return (lhs-rhs).dot(lhs-rhs); });
-
-		// this function should decrease
-		std::cout << m_f << std::endl;
 
 		// update centroids
 		m_centroids = std::move(new_centroids);

@@ -155,7 +155,8 @@ int main()
 	// }
 	// std::cout << std::time(0)-tstart << std::endl;
 
-	img::Image<img::Type::GRAYSCALE> img("images/blackboard.jpg");
+	img::Image<img::Type::GRAYSCALE> img("images/mat.jpg");
+	// img::Image<img::Type::GRAYSCALE> img("images/blackboard.jpg");
 	// img::Image<img::Type::GRAYSCALE> img("images/storm_trooper.jpg");
 
 	auto binary = binarization(img);
