@@ -75,6 +75,11 @@ namespace img {
             m_name = std::move(name);
         }
 
+		unsigned pixels() const
+		{
+			return cols()*rows();
+		}
+
 		operator bool() const
 		{
 			return !m_data.empty();

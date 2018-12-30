@@ -6,6 +6,7 @@
 #include "pca.hpp"
 #include "canny.hpp"
 #include "image.hpp"
+#include "kmeans.hpp"
 #include <variant>
 #include <QFileDialog>
 #include <QtGui>
@@ -121,7 +122,10 @@ void MainWindow::on_toolBox_currentChanged(int index)
 {
     ui->cannySlider->setValue(0);
     ui->fuzzySlider->setValue(0);
-    ui->pcaSpinBox->setMaximum(std::min(im.cols(), im.rows()));
+    ui->pcaSpinBox->setValue(2);
+    ui->posterSpinBox->setValue(2);
+    if (im)
+        ui->pcaSpinBox->setMaximum(std::min(im.cols(), im.rows()));
 }
 
 void MainWindow::on_fuzzyButton_clicked()
@@ -189,4 +193,16 @@ void MainWindow::on_distortionButton_clicked()
         ui->displayImageLabel->mouse_enabled = true;
         ui->toolBox->setDisabled(true);
    }
+}
+
+void MainWindow::on_posterizeButton_clicked()
+{
+    if (im) {
+        int k = ui->posterSpinBox->value();
+        auto im_poster = color_quantization(im, k);
+        im_poster.set_name(im.purename()+"_poster.png");
+        display_image(im_poster);
+
+        im_transformed = std::move(im_poster);
+    }
 }

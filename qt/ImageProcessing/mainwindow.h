@@ -42,7 +42,9 @@ private slots:
 
     void on_distortionButton_clicked();
 
- public slots:
+    void on_posterizeButton_clicked();
+
+public slots:
     void remove_distortion(QVector<QPoint>& points);
 
 private:

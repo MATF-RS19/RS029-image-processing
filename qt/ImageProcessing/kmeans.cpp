@@ -1,4 +1,4 @@
-#include "image.hpp"
+#include "kmeans.hpp"
 #include <numeric>
 #include <mutex>
 #include <Eigen/Dense>
@@ -163,20 +163,4 @@ private:
 img::Image<img::Type::RGB> color_quantization(const img::Image<img::Type::RGB>& img, int k)
 {
 	return kmeans(img, k).cluster();
-}
-
-int main()
-{
-	img::Image<img::Type::RGB> img("images/cars.jpg");
-
-	auto tstart = std::time(0);
-	// for (int i = 0; i < 10; i++) {
-		auto output = color_quantization(img, 10);
-	// }
-	std::cout << std::time(0)-tstart << std::endl;
-
-	output.show();
-	cv::waitKey(0);
-	output.save("kmeans_output.png");
-	return 0;
 }

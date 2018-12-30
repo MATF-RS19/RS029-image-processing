@@ -51,6 +51,10 @@ public:
     QWidget *page_3;
     QVBoxLayout *verticalLayout_3;
     QPushButton *binarizeButton;
+    QWidget *page_2;
+    QGridLayout *gridLayout_2;
+    QPushButton *posterizeButton;
+    QSpinBox *posterSpinBox;
     QWidget *EdgeDetection;
     QVBoxLayout *verticalLayout_4;
     QSlider *cannySlider;
@@ -120,7 +124,7 @@ public:
         MainWindow->setStatusBar(statusBar);
         dockWidget = new QDockWidget(MainWindow);
         dockWidget->setObjectName(QStringLiteral("dockWidget"));
-        dockWidget->setMinimumSize(QSize(200, 272));
+        dockWidget->setMinimumSize(QSize(200, 305));
         dockWidgetContents = new QWidget();
         dockWidgetContents->setObjectName(QStringLiteral("dockWidgetContents"));
         formLayout = new QFormLayout(dockWidgetContents);
@@ -160,6 +164,24 @@ public:
         verticalLayout_3->addWidget(binarizeButton);
 
         toolBox->addItem(page_3, QStringLiteral("Binarization"));
+        page_2 = new QWidget();
+        page_2->setObjectName(QStringLiteral("page_2"));
+        gridLayout_2 = new QGridLayout(page_2);
+        gridLayout_2->setSpacing(6);
+        gridLayout_2->setContentsMargins(11, 11, 11, 11);
+        gridLayout_2->setObjectName(QStringLiteral("gridLayout_2"));
+        posterizeButton = new QPushButton(page_2);
+        posterizeButton->setObjectName(QStringLiteral("posterizeButton"));
+
+        gridLayout_2->addWidget(posterizeButton, 1, 0, 1, 1);
+
+        posterSpinBox = new QSpinBox(page_2);
+        posterSpinBox->setObjectName(QStringLiteral("posterSpinBox"));
+        posterSpinBox->setMinimum(2);
+
+        gridLayout_2->addWidget(posterSpinBox, 0, 0, 1, 1);
+
+        toolBox->addItem(page_2, QStringLiteral("Posterize"));
         EdgeDetection = new QWidget();
         EdgeDetection->setObjectName(QStringLiteral("EdgeDetection"));
         EdgeDetection->setGeometry(QRect(0, 0, 182, 120));
@@ -200,6 +222,7 @@ public:
         verticalLayout_5->setObjectName(QStringLiteral("verticalLayout_5"));
         pcaSpinBox = new QSpinBox(page_4);
         pcaSpinBox->setObjectName(QStringLiteral("pcaSpinBox"));
+        pcaSpinBox->setMinimum(2);
 
         verticalLayout_5->addWidget(pcaSpinBox);
 
@@ -230,7 +253,7 @@ public:
 
         retranslateUi(MainWindow);
 
-        toolBox->setCurrentIndex(4);
+        toolBox->setCurrentIndex(0);
 
 
         QMetaObject::connectSlotsByName(MainWindow);
@@ -245,6 +268,8 @@ public:
         toolBox->setItemText(toolBox->indexOf(page), QApplication::translate("MainWindow", "Open/Save", nullptr));
         binarizeButton->setText(QApplication::translate("MainWindow", "Binarize", nullptr));
         toolBox->setItemText(toolBox->indexOf(page_3), QApplication::translate("MainWindow", "Binarization", nullptr));
+        posterizeButton->setText(QApplication::translate("MainWindow", "Posterize", nullptr));
+        toolBox->setItemText(toolBox->indexOf(page_2), QApplication::translate("MainWindow", "Posterize", nullptr));
         cannyButton->setText(QApplication::translate("MainWindow", "Canny", nullptr));
         fuzzyButton->setText(QApplication::translate("MainWindow", "Fuzzy", nullptr));
         toolBox->setItemText(toolBox->indexOf(EdgeDetection), QApplication::translate("MainWindow", "Edge detection", nullptr));

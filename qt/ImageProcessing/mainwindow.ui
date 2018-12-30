@@ -107,7 +107,7 @@
    <property name="minimumSize">
     <size>
      <width>200</width>
-     <height>272</height>
+     <height>305</height>
     </size>
    </property>
    <attribute name="dockWidgetArea">
@@ -118,7 +118,7 @@
      <item row="0" column="0" colspan="2">
       <widget class="QToolBox" name="toolBox">
        <property name="currentIndex">
-        <number>4</number>
+        <number>0</number>
        </property>
        <widget class="QWidget" name="page">
         <property name="geometry">
@@ -166,6 +166,27 @@
           <widget class="QPushButton" name="binarizeButton">
            <property name="text">
             <string>Binarize</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+       <widget class="QWidget" name="page_2">
+        <attribute name="label">
+         <string>Posterize</string>
+        </attribute>
+        <layout class="QGridLayout" name="gridLayout_2">
+         <item row="1" column="0">
+          <widget class="QPushButton" name="posterizeButton">
+           <property name="text">
+            <string>Posterize</string>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="0">
+          <widget class="QSpinBox" name="posterSpinBox">
+           <property name="minimum">
+            <number>2</number>
            </property>
           </widget>
          </item>
@@ -231,7 +252,11 @@
         </attribute>
         <layout class="QVBoxLayout" name="verticalLayout_5">
          <item>
-          <widget class="QSpinBox" name="pcaSpinBox"/>
+          <widget class="QSpinBox" name="pcaSpinBox">
+           <property name="minimum">
+            <number>2</number>
+           </property>
+          </widget>
          </item>
          <item>
           <widget class="QPushButton" name="pcaButton">

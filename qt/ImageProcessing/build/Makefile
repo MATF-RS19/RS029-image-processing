@@ -58,7 +58,8 @@ SOURCES       = ../main.cpp \
 		../fuzzy_edge_detection.cpp \
 		../pca.cpp \
 		../distortion.cpp \
-		../displaylabel.cpp moc_mainwindow.cpp \
+		../displaylabel.cpp \
+		../kmeans.cpp moc_mainwindow.cpp \
 		moc_displaylabel.cpp
 OBJECTS       = main.o \
 		mainwindow.o \
@@ -69,6 +70,7 @@ OBJECTS       = main.o \
 		pca.o \
 		distortion.o \
 		displaylabel.o \
+		kmeans.o \
 		moc_mainwindow.o \
 		moc_displaylabel.o
 DIST          = /usr/lib/qt/mkspecs/features/spec_pre.prf \
@@ -311,7 +313,8 @@ DIST          = /usr/lib/qt/mkspecs/features/spec_pre.prf \
 		../fuzzy_edge_detection.hpp \
 		../pca.hpp \
 		../distortion.hpp \
-		../displaylabel.h ../main.cpp \
+		../displaylabel.h \
+		../kmeans.hpp ../main.cpp \
 		../mainwindow.cpp \
 		../image.cpp \
 		../binarization.cpp \
@@ -319,7 +322,8 @@ DIST          = /usr/lib/qt/mkspecs/features/spec_pre.prf \
 		../fuzzy_edge_detection.cpp \
 		../pca.cpp \
 		../distortion.cpp \
-		../displaylabel.cpp
+		../displaylabel.cpp \
+		../kmeans.cpp
 QMAKE_TARGET  = ImageProcessing
 DESTDIR       = 
 TARGET        = ImageProcessing
@@ -821,8 +825,8 @@ distdir: FORCE
 	@test -d $(DISTDIR) || mkdir -p $(DISTDIR)
 	$(COPY_FILE) --parents $(DIST) $(DISTDIR)/
 	$(COPY_FILE) --parents /usr/lib/qt/mkspecs/features/data/dummy.cpp $(DISTDIR)/
-	$(COPY_FILE) --parents ../mainwindow.h ../image.hpp ../canny.hpp ../binarization.hpp ../fuzzy_edge_detection.hpp ../pca.hpp ../distortion.hpp ../displaylabel.h $(DISTDIR)/
-	$(COPY_FILE) --parents ../main.cpp ../mainwindow.cpp ../image.cpp ../binarization.cpp ../canny.cpp ../fuzzy_edge_detection.cpp ../pca.cpp ../distortion.cpp ../displaylabel.cpp $(DISTDIR)/
+	$(COPY_FILE) --parents ../mainwindow.h ../image.hpp ../canny.hpp ../binarization.hpp ../fuzzy_edge_detection.hpp ../pca.hpp ../distortion.hpp ../displaylabel.h ../kmeans.hpp $(DISTDIR)/
+	$(COPY_FILE) --parents ../main.cpp ../mainwindow.cpp ../image.cpp ../binarization.cpp ../canny.cpp ../fuzzy_edge_detection.cpp ../pca.cpp ../distortion.cpp ../displaylabel.cpp ../kmeans.cpp $(DISTDIR)/
 	$(COPY_FILE) --parents ../mainwindow.ui $(DISTDIR)/
 
 
@@ -902,16 +906,19 @@ mainwindow.o: ../mainwindow.cpp ../mainwindow.h \
 		../fuzzy_edge_detection.hpp \
 		../distortion.hpp \
 		../pca.hpp \
-		../canny.hpp
+		../canny.hpp \
+		../kmeans.hpp
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o mainwindow.o ../mainwindow.cpp
 
 image.o: ../image.cpp ../image.hpp
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o image.o ../image.cpp
 
-binarization.o: ../binarization.cpp ../image.hpp
+binarization.o: ../binarization.cpp ../binarization.hpp \
+		../image.hpp
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o binarization.o ../binarization.cpp
 
-canny.o: ../canny.cpp ../image.hpp
+canny.o: ../canny.cpp ../canny.hpp \
+		../image.hpp
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o canny.o ../canny.cpp
 
 fuzzy_edge_detection.o: ../fuzzy_edge_detection.cpp ../fuzzy_edge_detection.hpp \
@@ -928,6 +935,10 @@ distortion.o: ../distortion.cpp ../distortion.hpp \
 
 displaylabel.o: ../displaylabel.cpp ../displaylabel.h
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o displaylabel.o ../displaylabel.cpp
+
+kmeans.o: ../kmeans.cpp ../kmeans.hpp \
+		../image.hpp
+	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o kmeans.o ../kmeans.cpp
 
 moc_mainwindow.o: moc_mainwindow.cpp 
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o moc_mainwindow.o moc_mainwindow.cpp

@@ -32,7 +32,8 @@ SOURCES += \
     fuzzy_edge_detection.cpp \
     pca.cpp \
     distortion.cpp \
-    displaylabel.cpp
+    displaylabel.cpp \
+    kmeans.cpp
 
 HEADERS += \
         mainwindow.h \
@@ -42,7 +43,8 @@ HEADERS += \
     fuzzy_edge_detection.hpp \
     pca.hpp \
     distortion.hpp \
-    displaylabel.h
+    displaylabel.h \
+    kmeans.hpp
 
 FORMS += \
         mainwindow.ui
