@@ -50,7 +50,8 @@ public:
     QPushButton *saveImageButton;
     QWidget *page_3;
     QVBoxLayout *verticalLayout_3;
-    QPushButton *binarizeButton;
+    QPushButton *binarizeKmeansButton;
+    QPushButton *binarizeFcmButton;
     QWidget *page_2;
     QGridLayout *gridLayout_2;
     QPushButton *posterizeButton;
@@ -153,19 +154,25 @@ public:
         toolBox->addItem(page, QStringLiteral("Open/Save"));
         page_3 = new QWidget();
         page_3->setObjectName(QStringLiteral("page_3"));
-        page_3->setGeometry(QRect(0, 0, 182, 68));
+        page_3->setGeometry(QRect(0, 0, 168, 78));
         verticalLayout_3 = new QVBoxLayout(page_3);
         verticalLayout_3->setSpacing(6);
         verticalLayout_3->setContentsMargins(11, 11, 11, 11);
         verticalLayout_3->setObjectName(QStringLiteral("verticalLayout_3"));
-        binarizeButton = new QPushButton(page_3);
-        binarizeButton->setObjectName(QStringLiteral("binarizeButton"));
+        binarizeKmeansButton = new QPushButton(page_3);
+        binarizeKmeansButton->setObjectName(QStringLiteral("binarizeKmeansButton"));
 
-        verticalLayout_3->addWidget(binarizeButton);
+        verticalLayout_3->addWidget(binarizeKmeansButton);
+
+        binarizeFcmButton = new QPushButton(page_3);
+        binarizeFcmButton->setObjectName(QStringLiteral("binarizeFcmButton"));
+
+        verticalLayout_3->addWidget(binarizeFcmButton);
 
         toolBox->addItem(page_3, QStringLiteral("Binarization"));
         page_2 = new QWidget();
         page_2->setObjectName(QStringLiteral("page_2"));
+        page_2->setGeometry(QRect(0, 0, 182, 79));
         gridLayout_2 = new QGridLayout(page_2);
         gridLayout_2->setSpacing(6);
         gridLayout_2->setContentsMargins(11, 11, 11, 11);
@@ -266,7 +273,8 @@ public:
         openImageButton->setText(QApplication::translate("MainWindow", "Open", nullptr));
         saveImageButton->setText(QApplication::translate("MainWindow", "Save", nullptr));
         toolBox->setItemText(toolBox->indexOf(page), QApplication::translate("MainWindow", "Open/Save", nullptr));
-        binarizeButton->setText(QApplication::translate("MainWindow", "Binarize", nullptr));
+        binarizeKmeansButton->setText(QApplication::translate("MainWindow", "kmeans", nullptr));
+        binarizeFcmButton->setText(QApplication::translate("MainWindow", "fuzzy c-means", nullptr));
         toolBox->setItemText(toolBox->indexOf(page_3), QApplication::translate("MainWindow", "Binarization", nullptr));
         posterizeButton->setText(QApplication::translate("MainWindow", "Posterize", nullptr));
         toolBox->setItemText(toolBox->indexOf(page_2), QApplication::translate("MainWindow", "Posterize", nullptr));

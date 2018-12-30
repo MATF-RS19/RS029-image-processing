@@ -1,4 +1,4 @@
-#include "image.hpp"
+#include "binarization.hpp"
 #include <numeric>
 #include <mutex>
 #include <Eigen/Dense>
@@ -136,36 +136,7 @@ private:
 	}
 };
 
-img::Image<img::Type::GRAYSCALE> binarization(const img::Image<img::Type::GRAYSCALE>& img)
+img::Image<img::Type::GRAYSCALE> binarization_kmeans(const img::Image<img::Type::GRAYSCALE>& img)
 {
 	return kmeans(img).cluster();
-}
-
-int main()
-{
-
-	img::Image<img::Type::GRAYSCALE> img("images/blackboard.jpg");
-	if (!img) return -1;
-	auto tstart = std::time(0);
-
-	for (int i = 0; i < 50; i++) {
-		// auto output = canny(img);
-		auto binary = binarization(img);
-	}
-	std::cout << std::time(0)-tstart << std::endl;
-
-	// img::Image<img::Type::GRAYSCALE> img("images/mat.jpg");
-	// img::Image<img::Type::GRAYSCALE> img("images/storm_trooper.jpg");
-	// img::Image<img::Type::GRAYSCALE> img("images/blackboard.jpg");
-
-	// auto tstart = std::time(0);
-	// for (int i = 0; i < 10; i++) {
-		// auto output = binarization(img);
-	// }
-	// std::cout << std::time(0)-tstart << std::endl;
-
-	// output.show();
-	// cv::waitKey(0);
-	// output.save("binarization_kmeans_output.png");
-	return 0;
 }

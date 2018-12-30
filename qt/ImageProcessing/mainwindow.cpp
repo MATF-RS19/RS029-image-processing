@@ -72,11 +72,22 @@ void MainWindow::on_openImageButton_clicked()
 }
 
 
-void MainWindow::on_binarizeButton_clicked()
+void MainWindow::on_binarizeFcmButton_clicked()
 {
     if (im) {
-        auto im_binarized = binarization(im.grayscale());
-        im_binarized.set_name(im.purename()+"_binarized.png");
+        auto im_binarized = binarization_fcm(im.grayscale());
+        im_binarized.set_name(im.purename()+"_binarized_fcm.png");
+        display_image(im_binarized);
+
+        im_transformed = std::move(im_binarized);
+    }
+}
+
+void MainWindow::on_binarizeKmeansButton_clicked()
+{
+    if (im) {
+        auto im_binarized = binarization_kmeans(im.grayscale());
+        im_binarized.set_name(im.purename()+"_binarized_kmeans.png");
         display_image(im_binarized);
 
         im_transformed = std::move(im_binarized);
@@ -206,3 +217,4 @@ void MainWindow::on_posterizeButton_clicked()
         im_transformed = std::move(im_poster);
     }
 }
+

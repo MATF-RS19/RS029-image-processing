@@ -136,7 +136,7 @@ private:
 };
 
 
-img::Image<img::Type::GRAYSCALE> binarization(const img::Image<img::Type::GRAYSCALE>& img)
+img::Image<img::Type::GRAYSCALE> binarization_fcm(const img::Image<img::Type::GRAYSCALE>& img)
 {
 	return fcm(img).binarize();
 }

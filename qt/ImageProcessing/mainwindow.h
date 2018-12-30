@@ -24,7 +24,7 @@ private:
 private slots:
     void on_openImageButton_clicked();
 
-    void on_binarizeButton_clicked();
+    void on_binarizeFcmButton_clicked();
 
     void on_saveImageButton_clicked();
 
@@ -43,6 +43,8 @@ private slots:
     void on_distortionButton_clicked();
 
     void on_posterizeButton_clicked();
+
+    void on_binarizeKmeansButton_clicked();
 
 public slots:
     void remove_distortion(QVector<QPoint>& points);

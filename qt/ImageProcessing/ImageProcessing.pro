@@ -27,13 +27,14 @@ SOURCES += \
         main.cpp \
         mainwindow.cpp \
     image.cpp \
-    binarization.cpp \
     canny.cpp \
     fuzzy_edge_detection.cpp \
     pca.cpp \
     distortion.cpp \
     displaylabel.cpp \
-    kmeans.cpp
+    kmeans.cpp \
+    binarization_fcm.cpp \
+    binarization_kmeans.cpp
 
 HEADERS += \
         mainwindow.h \

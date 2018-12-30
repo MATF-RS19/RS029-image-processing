@@ -53,24 +53,26 @@ OBJECTS_DIR   = ./
 SOURCES       = ../main.cpp \
 		../mainwindow.cpp \
 		../image.cpp \
-		../binarization.cpp \
 		../canny.cpp \
 		../fuzzy_edge_detection.cpp \
 		../pca.cpp \
 		../distortion.cpp \
 		../displaylabel.cpp \
-		../kmeans.cpp moc_mainwindow.cpp \
+		../kmeans.cpp \
+		../binarization_fcm.cpp \
+		../binarization_kmeans.cpp moc_mainwindow.cpp \
 		moc_displaylabel.cpp
 OBJECTS       = main.o \
 		mainwindow.o \
 		image.o \
-		binarization.o \
 		canny.o \
 		fuzzy_edge_detection.o \
 		pca.o \
 		distortion.o \
 		displaylabel.o \
 		kmeans.o \
+		binarization_fcm.o \
+		binarization_kmeans.o \
 		moc_mainwindow.o \
 		moc_displaylabel.o
 DIST          = /usr/lib/qt/mkspecs/features/spec_pre.prf \
@@ -317,13 +319,14 @@ DIST          = /usr/lib/qt/mkspecs/features/spec_pre.prf \
 		../kmeans.hpp ../main.cpp \
 		../mainwindow.cpp \
 		../image.cpp \
-		../binarization.cpp \
 		../canny.cpp \
 		../fuzzy_edge_detection.cpp \
 		../pca.cpp \
 		../distortion.cpp \
 		../displaylabel.cpp \
-		../kmeans.cpp
+		../kmeans.cpp \
+		../binarization_fcm.cpp \
+		../binarization_kmeans.cpp
 QMAKE_TARGET  = ImageProcessing
 DESTDIR       = 
 TARGET        = ImageProcessing
@@ -826,7 +829,7 @@ distdir: FORCE
 	$(COPY_FILE) --parents $(DIST) $(DISTDIR)/
 	$(COPY_FILE) --parents /usr/lib/qt/mkspecs/features/data/dummy.cpp $(DISTDIR)/
 	$(COPY_FILE) --parents ../mainwindow.h ../image.hpp ../canny.hpp ../binarization.hpp ../fuzzy_edge_detection.hpp ../pca.hpp ../distortion.hpp ../displaylabel.h ../kmeans.hpp $(DISTDIR)/
-	$(COPY_FILE) --parents ../main.cpp ../mainwindow.cpp ../image.cpp ../binarization.cpp ../canny.cpp ../fuzzy_edge_detection.cpp ../pca.cpp ../distortion.cpp ../displaylabel.cpp ../kmeans.cpp $(DISTDIR)/
+	$(COPY_FILE) --parents ../main.cpp ../mainwindow.cpp ../image.cpp ../canny.cpp ../fuzzy_edge_detection.cpp ../pca.cpp ../distortion.cpp ../displaylabel.cpp ../kmeans.cpp ../binarization_fcm.cpp ../binarization_kmeans.cpp $(DISTDIR)/
 	$(COPY_FILE) --parents ../mainwindow.ui $(DISTDIR)/
 
 
@@ -913,10 +916,6 @@ mainwindow.o: ../mainwindow.cpp ../mainwindow.h \
 image.o: ../image.cpp ../image.hpp
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o image.o ../image.cpp
 
-binarization.o: ../binarization.cpp ../binarization.hpp \
-		../image.hpp
-	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o binarization.o ../binarization.cpp
-
 canny.o: ../canny.cpp ../canny.hpp \
 		../image.hpp
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o canny.o ../canny.cpp
@@ -939,6 +938,14 @@ displaylabel.o: ../displaylabel.cpp ../displaylabel.h
 kmeans.o: ../kmeans.cpp ../kmeans.hpp \
 		../image.hpp
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o kmeans.o ../kmeans.cpp
+
+binarization_fcm.o: ../binarization_fcm.cpp ../binarization.hpp \
+		../image.hpp
+	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o binarization_fcm.o ../binarization_fcm.cpp
+
+binarization_kmeans.o: ../binarization_kmeans.cpp ../binarization.hpp \
+		../image.hpp
+	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o binarization_kmeans.o ../binarization_kmeans.cpp
 
 moc_mainwindow.o: moc_mainwindow.cpp 
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o moc_mainwindow.o moc_mainwindow.cpp
