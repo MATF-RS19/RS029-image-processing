@@ -5,6 +5,7 @@
 #include "image.hpp"
 #include <variant>
 #include <QMouseEvent>
+#include <QPushButton>
 #include <QVector>
 
 namespace Ui {

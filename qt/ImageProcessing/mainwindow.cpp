@@ -24,6 +24,7 @@ MainWindow::~MainWindow()
     delete ui;
 }
 
+
 void MainWindow::display_image(const auto& image)
 {
     if (!image) return;
@@ -60,6 +61,7 @@ void MainWindow::display_image(const auto& image)
     ui->displayImageLabel->setPixmap(QPixmap::fromImage(std::move(qim_display)));
 }
 
+
 void MainWindow::on_openImageButton_clicked()
 {
     QString image_path = QFileDialog::getOpenFileName(this,  ("Open File"), QDir::currentPath(), ("Images (*.png *.xpm *.jpg)"));
@@ -70,6 +72,16 @@ void MainWindow::on_openImageButton_clicked()
     // clear transformed image
     im_transformed = img::Image<>{};
 }
+
+void MainWindow::on_saveImageButton_clicked()
+{
+    std::visit([this](auto&& i) {
+        if (!i) return;
+        QString save_path = QFileDialog::getSaveFileName(this, ("Save File"), i.name().c_str(), ("Images (*.png *.xpm *.jpg)"));
+        i.save(save_path.toStdString());
+    }, im_transformed);
+}
+
 
 
 void MainWindow::on_binarizeFcmButton_clicked()
@@ -94,14 +106,6 @@ void MainWindow::on_binarizeKmeansButton_clicked()
     }
 }
 
-void MainWindow::on_saveImageButton_clicked()
-{
-    std::visit([this](auto&& i) {
-        if (!i) return;
-        QString save_path = QFileDialog::getSaveFileName(this, ("Save File"), i.name().c_str(), ("Images (*.png *.xpm *.jpg)"));
-        i.save(save_path.toStdString());
-    }, im_transformed);
-}
 
 void MainWindow::on_cannyButton_clicked()
 {
@@ -128,17 +132,6 @@ void MainWindow::on_cannySlider_sliderReleased()
     }
 }
 
-
-void MainWindow::on_toolBox_currentChanged(int index)
-{
-    ui->cannySlider->setValue(0);
-    ui->fuzzySlider->setValue(0);
-    ui->pcaSpinBox->setValue(2);
-    ui->posterSpinBox->setValue(2);
-    if (im)
-        ui->pcaSpinBox->setMaximum(std::min(im.cols(), im.rows()));
-}
-
 void MainWindow::on_fuzzyButton_clicked()
 {
     if (im) {
@@ -150,7 +143,6 @@ void MainWindow::on_fuzzyButton_clicked()
 
         ui->fuzzySlider->setValue(35);
     }
-
 }
 
 void MainWindow::on_fuzzySlider_sliderReleased()
@@ -203,7 +195,8 @@ void MainWindow::on_distortionButton_clicked()
     if (im) {
         ui->displayImageLabel->mouse_enabled = true;
         ui->toolBox->setDisabled(true);
-   }
+        // TODO disable resizing here
+    }
 }
 
 void MainWindow::on_posterizeButton_clicked()
@@ -218,3 +211,12 @@ void MainWindow::on_posterizeButton_clicked()
     }
 }
 
+void MainWindow::on_toolBox_currentChanged(int index)
+{
+    ui->cannySlider->setValue(0);
+    ui->fuzzySlider->setValue(0);
+    ui->pcaSpinBox->setValue(2);
+    ui->posterSpinBox->setValue(2);
+    if (im)
+        ui->pcaSpinBox->setMaximum(std::min(im.cols(), im.rows()));
+}
