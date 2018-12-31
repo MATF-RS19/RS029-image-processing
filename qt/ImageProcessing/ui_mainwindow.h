@@ -10,18 +10,18 @@
 #define UI_MAINWINDOW_H
 
 #include <QtCore/QVariant>
+#include <QtWidgets/QAction>
 #include <QtWidgets/QApplication>
 #include <QtWidgets/QDockWidget>
 #include <QtWidgets/QFormLayout>
 #include <QtWidgets/QFrame>
 #include <QtWidgets/QGridLayout>
 #include <QtWidgets/QMainWindow>
+#include <QtWidgets/QMenu>
 #include <QtWidgets/QMenuBar>
 #include <QtWidgets/QPushButton>
 #include <QtWidgets/QSlider>
 #include <QtWidgets/QSpinBox>
-#include <QtWidgets/QStatusBar>
-#include <QtWidgets/QToolBar>
 #include <QtWidgets/QToolBox>
 #include <QtWidgets/QVBoxLayout>
 #include <QtWidgets/QWidget>
@@ -37,9 +37,6 @@ public:
     QFrame *frame;
     QGridLayout *gridLayout;
     displayLabel *displayImageLabel;
-    QMenuBar *menuBar;
-    QToolBar *mainToolBar;
-    QStatusBar *statusBar;
     QDockWidget *dockWidget;
     QWidget *dockWidgetContents;
     QFormLayout *formLayout;
@@ -69,6 +66,8 @@ public:
     QWidget *distortion;
     QVBoxLayout *verticalLayout_6;
     QPushButton *distortionButton;
+    QMenuBar *menuBar;
+    QMenu *menuIP;
 
     void setupUi(QMainWindow *MainWindow)
     {
@@ -152,16 +151,6 @@ public:
         verticalLayout_7->addWidget(frame);
 
         MainWindow->setCentralWidget(centralWidget);
-        menuBar = new QMenuBar(MainWindow);
-        menuBar->setObjectName(QStringLiteral("menuBar"));
-        menuBar->setGeometry(QRect(0, 0, 781, 24));
-        MainWindow->setMenuBar(menuBar);
-        mainToolBar = new QToolBar(MainWindow);
-        mainToolBar->setObjectName(QStringLiteral("mainToolBar"));
-        MainWindow->addToolBar(Qt::TopToolBarArea, mainToolBar);
-        statusBar = new QStatusBar(MainWindow);
-        statusBar->setObjectName(QStringLiteral("statusBar"));
-        MainWindow->setStatusBar(statusBar);
         dockWidget = new QDockWidget(MainWindow);
         dockWidget->setObjectName(QStringLiteral("dockWidget"));
         dockWidget->setMinimumSize(QSize(200, 319));
@@ -210,7 +199,7 @@ public:
 ""));
         open_save = new QWidget();
         open_save->setObjectName(QStringLiteral("open_save"));
-        open_save->setGeometry(QRect(0, 0, 182, 82));
+        open_save->setGeometry(QRect(0, 0, 182, 78));
         open_save->setStyleSheet(QStringLiteral(""));
         verticalLayout_2 = new QVBoxLayout(open_save);
         verticalLayout_2->setSpacing(6);
@@ -232,7 +221,7 @@ public:
         toolBox->addItem(open_save, QStringLiteral("Open/Save"));
         binarization = new QWidget();
         binarization->setObjectName(QStringLiteral("binarization"));
-        binarization->setGeometry(QRect(0, 0, 182, 82));
+        binarization->setGeometry(QRect(0, 0, 182, 78));
         binarization->setStyleSheet(QStringLiteral(""));
         verticalLayout_3 = new QVBoxLayout(binarization);
         verticalLayout_3->setSpacing(6);
@@ -251,7 +240,7 @@ public:
         toolBox->addItem(binarization, QStringLiteral("Binarization"));
         poster = new QWidget();
         poster->setObjectName(QStringLiteral("poster"));
-        poster->setGeometry(QRect(0, 0, 182, 82));
+        poster->setGeometry(QRect(0, 0, 182, 80));
         poster->setStyleSheet(QStringLiteral(""));
         gridLayout_2 = new QGridLayout(poster);
         gridLayout_2->setSpacing(6);
@@ -271,7 +260,7 @@ public:
         toolBox->addItem(poster, QStringLiteral("Posterize"));
         edge_detection = new QWidget();
         edge_detection->setObjectName(QStringLiteral("edge_detection"));
-        edge_detection->setGeometry(QRect(0, 0, 182, 121));
+        edge_detection->setGeometry(QRect(0, 0, 182, 120));
         edge_detection->setStyleSheet(QStringLiteral(""));
         verticalLayout_4 = new QVBoxLayout(edge_detection);
         verticalLayout_4->setSpacing(6);
@@ -304,7 +293,7 @@ public:
         toolBox->addItem(edge_detection, QStringLiteral("Edge detection"));
         compression = new QWidget();
         compression->setObjectName(QStringLiteral("compression"));
-        compression->setGeometry(QRect(0, 0, 182, 82));
+        compression->setGeometry(QRect(0, 0, 182, 80));
         compression->setStyleSheet(QStringLiteral(""));
         verticalLayout_5 = new QVBoxLayout(compression);
         verticalLayout_5->setSpacing(6);
@@ -341,6 +330,14 @@ public:
 
         dockWidget->setWidget(dockWidgetContents);
         MainWindow->addDockWidget(static_cast<Qt::DockWidgetArea>(1), dockWidget);
+        menuBar = new QMenuBar(MainWindow);
+        menuBar->setObjectName(QStringLiteral("menuBar"));
+        menuBar->setGeometry(QRect(0, 0, 781, 24));
+        menuIP = new QMenu(menuBar);
+        menuIP->setObjectName(QStringLiteral("menuIP"));
+        MainWindow->setMenuBar(menuBar);
+
+        menuBar->addAction(menuIP->menuAction());
 
         retranslateUi(MainWindow);
 
@@ -369,6 +366,7 @@ public:
         toolBox->setItemText(toolBox->indexOf(compression), QApplication::translate("MainWindow", "Compression", nullptr));
         distortionButton->setText(QApplication::translate("MainWindow", "start", nullptr));
         toolBox->setItemText(toolBox->indexOf(distortion), QApplication::translate("MainWindow", "Distortion", nullptr));
+        menuIP->setTitle(QApplication::translate("MainWindow", "\357\204\240", nullptr));
     } // retranslateUi
 
 };
