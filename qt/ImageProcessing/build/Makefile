@@ -60,7 +60,8 @@ SOURCES       = ../main.cpp \
 		../displaylabel.cpp \
 		../kmeans.cpp \
 		../binarization_fcm.cpp \
-		../binarization_kmeans.cpp moc_mainwindow.cpp \
+		../binarization_kmeans.cpp qrc_images.cpp \
+		moc_mainwindow.cpp \
 		moc_displaylabel.cpp
 OBJECTS       = main.o \
 		mainwindow.o \
@@ -73,6 +74,7 @@ OBJECTS       = main.o \
 		kmeans.o \
 		binarization_fcm.o \
 		binarization_kmeans.o \
+		qrc_images.o \
 		moc_mainwindow.o \
 		moc_displaylabel.o
 DIST          = /usr/lib/qt/mkspecs/features/spec_pre.prf \
@@ -572,6 +574,7 @@ Makefile: ../ImageProcessing.pro /usr/lib/qt/mkspecs/linux-g++/qmake.conf /usr/l
 		/usr/lib/qt/mkspecs/features/yacc.prf \
 		/usr/lib/qt/mkspecs/features/lex.prf \
 		../ImageProcessing.pro \
+		../images.qrc \
 		/usr/lib/libQt5Widgets.prl \
 		/usr/lib/libQt5Gui.prl \
 		/usr/lib/libQt5Core.prl
@@ -810,6 +813,7 @@ Makefile: ../ImageProcessing.pro /usr/lib/qt/mkspecs/linux-g++/qmake.conf /usr/l
 /usr/lib/qt/mkspecs/features/yacc.prf:
 /usr/lib/qt/mkspecs/features/lex.prf:
 ../ImageProcessing.pro:
+../images.qrc:
 /usr/lib/libQt5Widgets.prl:
 /usr/lib/libQt5Gui.prl:
 /usr/lib/libQt5Core.prl:
@@ -827,6 +831,7 @@ dist: distdir FORCE
 distdir: FORCE
 	@test -d $(DISTDIR) || mkdir -p $(DISTDIR)
 	$(COPY_FILE) --parents $(DIST) $(DISTDIR)/
+	$(COPY_FILE) --parents ../images.qrc $(DISTDIR)/
 	$(COPY_FILE) --parents /usr/lib/qt/mkspecs/features/data/dummy.cpp $(DISTDIR)/
 	$(COPY_FILE) --parents ../mainwindow.h ../image.hpp ../canny.hpp ../binarization.hpp ../fuzzy_edge_detection.hpp ../pca.hpp ../distortion.hpp ../displaylabel.h ../kmeans.hpp $(DISTDIR)/
 	$(COPY_FILE) --parents ../main.cpp ../mainwindow.cpp ../image.cpp ../canny.cpp ../fuzzy_edge_detection.cpp ../pca.cpp ../distortion.cpp ../displaylabel.cpp ../kmeans.cpp ../binarization_fcm.cpp ../binarization_kmeans.cpp $(DISTDIR)/
@@ -853,8 +858,14 @@ check: first
 
 benchmark: first
 
-compiler_rcc_make_all:
+compiler_rcc_make_all: qrc_images.cpp
 compiler_rcc_clean:
+	-$(DEL_FILE) qrc_images.cpp
+qrc_images.cpp: ../images.qrc \
+		/usr/bin/rcc \
+		../background.jpg
+	/usr/bin/rcc -name images ../images.qrc -o qrc_images.cpp
+
 compiler_moc_predefs_make_all: moc_predefs.h
 compiler_moc_predefs_clean:
 	-$(DEL_FILE) moc_predefs.h
@@ -893,7 +904,7 @@ compiler_yacc_impl_make_all:
 compiler_yacc_impl_clean:
 compiler_lex_make_all:
 compiler_lex_clean:
-compiler_clean: compiler_moc_predefs_clean compiler_moc_header_clean compiler_uic_clean 
+compiler_clean: compiler_rcc_clean compiler_moc_predefs_clean compiler_moc_header_clean compiler_uic_clean 
 
 ####### Compile
 
@@ -946,6 +957,9 @@ binarization_fcm.o: ../binarization_fcm.cpp ../binarization.hpp \
 binarization_kmeans.o: ../binarization_kmeans.cpp ../binarization.hpp \
 		../image.hpp
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o binarization_kmeans.o ../binarization_kmeans.cpp
+
+qrc_images.o: qrc_images.cpp 
+	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o qrc_images.o qrc_images.cpp
 
 moc_mainwindow.o: moc_mainwindow.cpp 
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o moc_mainwindow.o moc_mainwindow.cpp

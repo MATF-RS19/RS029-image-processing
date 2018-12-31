@@ -23,13 +23,16 @@ void displayLabel::mousePressEvent(QMouseEvent* e)
 
 void displayLabel::paintEvent(QPaintEvent *)
 {
-   setAttribute(Qt::WA_OpaquePaintEvent); /// don't erase previous content
+   if (pixmap())
+       setAttribute(Qt::WA_OpaquePaintEvent); /// don't erase previous content
    QPainter painter(this);
    painter.setRenderHint(QPainter::Antialiasing, true);
    painter.setRenderHint(QPainter::Qt4CompatiblePainting, true);
 
    if (pixmap() && points.empty())
        painter.drawPixmap(0,0,pixmap()->width(),pixmap()->height(), *pixmap());
+ //  else if (!pixmap())
+ //      painter.drawPixmap(0,0,width(),height(), QPixmap(":/background.jpg"));
 
 
    if (!points.empty()) {

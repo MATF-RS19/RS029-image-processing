@@ -13,7 +13,17 @@
   <property name="windowTitle">
    <string>MainWindow</string>
   </property>
+  <property name="styleSheet">
+   <string notr="true">#MainWindow {
+	background:#333333;
+}</string>
+  </property>
   <widget class="QWidget" name="centralWidget">
+   <property name="styleSheet">
+    <string notr="true">#centralWidget{
+background:#333333;
+}</string>
+   </property>
    <layout class="QVBoxLayout" name="verticalLayout_7">
     <item>
      <widget class="QFrame" name="frame">
@@ -21,7 +31,9 @@
        <number>-1</number>
       </property>
       <property name="styleSheet">
-       <string notr="true"/>
+       <string notr="true">#frame {
+background:#333333;
+}</string>
       </property>
       <property name="frameShape">
        <enum>QFrame::StyledPanel</enum>
@@ -63,13 +75,15 @@
           <enum>Qt::LeftToRight</enum>
          </property>
          <property name="styleSheet">
-          <string notr="true"/>
+          <string notr="true">#displayImageLabel{
+background:#333333;
+}</string>
          </property>
          <property name="lineWidth">
           <number>0</number>
          </property>
          <property name="text">
-          <string>TextLabel</string>
+          <string/>
          </property>
          <property name="alignment">
           <set>Qt::AlignCenter</set>
@@ -107,16 +121,45 @@
    <property name="minimumSize">
     <size>
      <width>200</width>
-     <height>305</height>
+     <height>317</height>
     </size>
+   </property>
+   <property name="autoFillBackground">
+    <bool>false</bool>
+   </property>
+   <property name="styleSheet">
+    <string notr="true"/>
    </property>
    <attribute name="dockWidgetArea">
     <number>1</number>
    </attribute>
    <widget class="QWidget" name="dockWidgetContents">
+    <property name="styleSheet">
+     <string notr="true">#dockWidgetContents {
+background:#333333;
+}</string>
+    </property>
     <layout class="QFormLayout" name="formLayout">
      <item row="0" column="0" colspan="2">
       <widget class="QToolBox" name="toolBox">
+       <property name="styleSheet">
+        <string notr="true">#toolBox {
+	background: #333333;
+}
+
+QWidget { 
+	color : #1793D1;
+	background:#333333;
+	font: 75 14pt &quot;Terminus (TTF)&quot;;
+    font-weight:bold;
+ }
+
+QPushButton {
+	background : #1793D1;
+	color:black;
+}
+</string>
+       </property>
        <property name="currentIndex">
         <number>0</number>
        </property>
@@ -125,9 +168,12 @@
          <rect>
           <x>0</x>
           <y>0</y>
-          <width>182</width>
-          <height>78</height>
+          <width>168</width>
+          <height>82</height>
          </rect>
+        </property>
+        <property name="styleSheet">
+         <string notr="true"/>
         </property>
         <attribute name="label">
          <string>Open/Save</string>
@@ -135,6 +181,12 @@
         <layout class="QVBoxLayout" name="verticalLayout_2">
          <item>
           <widget class="QPushButton" name="openImageButton">
+           <property name="autoFillBackground">
+            <bool>false</bool>
+           </property>
+           <property name="styleSheet">
+            <string notr="true"/>
+           </property>
            <property name="text">
             <string>Open</string>
            </property>
@@ -155,8 +207,11 @@
           <x>0</x>
           <y>0</y>
           <width>168</width>
-          <height>78</height>
+          <height>82</height>
          </rect>
+        </property>
+        <property name="styleSheet">
+         <string notr="true"/>
         </property>
         <attribute name="label">
          <string>Binarization</string>
@@ -183,9 +238,12 @@
          <rect>
           <x>0</x>
           <y>0</y>
-          <width>182</width>
-          <height>79</height>
+          <width>168</width>
+          <height>82</height>
          </rect>
+        </property>
+        <property name="styleSheet">
+         <string notr="true"/>
         </property>
         <attribute name="label">
          <string>Posterize</string>
@@ -212,9 +270,12 @@
          <rect>
           <x>0</x>
           <y>0</y>
-          <width>182</width>
-          <height>120</height>
+          <width>168</width>
+          <height>124</height>
          </rect>
+        </property>
+        <property name="styleSheet">
+         <string notr="true"/>
         </property>
         <attribute name="label">
          <string>Edge detection</string>
@@ -258,9 +319,12 @@
          <rect>
           <x>0</x>
           <y>0</y>
-          <width>182</width>
-          <height>79</height>
+          <width>168</width>
+          <height>82</height>
          </rect>
+        </property>
+        <property name="styleSheet">
+         <string notr="true"/>
         </property>
         <attribute name="label">
          <string>Compression</string>
@@ -291,6 +355,9 @@
           <height>68</height>
          </rect>
         </property>
+        <property name="styleSheet">
+         <string notr="true"/>
+        </property>
         <attribute name="label">
          <string>Distortion</string>
         </attribute>
@@ -308,6 +375,39 @@
      </item>
     </layout>
    </widget>
+  </widget>
+  <widget class="QToolBar" name="toolBar">
+   <property name="windowTitle">
+    <string>toolBar</string>
+   </property>
+   <attribute name="toolBarArea">
+    <enum>TopToolBarArea</enum>
+   </attribute>
+   <attribute name="toolBarBreak">
+    <bool>false</bool>
+   </attribute>
+  </widget>
+  <widget class="QToolBar" name="toolBar_2">
+   <property name="windowTitle">
+    <string>toolBar_2</string>
+   </property>
+   <attribute name="toolBarArea">
+    <enum>TopToolBarArea</enum>
+   </attribute>
+   <attribute name="toolBarBreak">
+    <bool>false</bool>
+   </attribute>
+  </widget>
+  <widget class="QToolBar" name="toolBar_3">
+   <property name="windowTitle">
+    <string>toolBar_3</string>
+   </property>
+   <attribute name="toolBarArea">
+    <enum>TopToolBarArea</enum>
+   </attribute>
+   <attribute name="toolBarBreak">
+    <bool>false</bool>
+   </attribute>
   </widget>
  </widget>
  <layoutdefault spacing="6" margin="11"/>

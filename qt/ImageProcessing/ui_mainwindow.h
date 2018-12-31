@@ -69,14 +69,23 @@ public:
     QWidget *page_5;
     QVBoxLayout *verticalLayout_6;
     QPushButton *distortionButton;
+    QToolBar *toolBar;
+    QToolBar *toolBar_2;
+    QToolBar *toolBar_3;
 
     void setupUi(QMainWindow *MainWindow)
     {
         if (MainWindow->objectName().isEmpty())
             MainWindow->setObjectName(QStringLiteral("MainWindow"));
         MainWindow->resize(781, 435);
+        MainWindow->setStyleSheet(QLatin1String("#MainWindow {\n"
+"	background:#333333;\n"
+"}"));
         centralWidget = new QWidget(MainWindow);
         centralWidget->setObjectName(QStringLiteral("centralWidget"));
+        centralWidget->setStyleSheet(QLatin1String("#centralWidget{\n"
+"background:#333333;\n"
+"}"));
         verticalLayout_7 = new QVBoxLayout(centralWidget);
         verticalLayout_7->setSpacing(6);
         verticalLayout_7->setContentsMargins(11, 11, 11, 11);
@@ -84,7 +93,9 @@ public:
         frame = new QFrame(centralWidget);
         frame->setObjectName(QStringLiteral("frame"));
         frame->setToolTipDuration(-1);
-        frame->setStyleSheet(QStringLiteral(""));
+        frame->setStyleSheet(QLatin1String("#frame {\n"
+"background:#333333;\n"
+"}"));
         frame->setFrameShape(QFrame::StyledPanel);
         frame->setFrameShadow(QFrame::Raised);
         frame->setLineWidth(0);
@@ -102,7 +113,9 @@ public:
         displayImageLabel->setSizePolicy(sizePolicy);
         displayImageLabel->setToolTipDuration(-1);
         displayImageLabel->setLayoutDirection(Qt::LeftToRight);
-        displayImageLabel->setStyleSheet(QStringLiteral(""));
+        displayImageLabel->setStyleSheet(QLatin1String("#displayImageLabel{\n"
+"background:#333333;\n"
+"}"));
         displayImageLabel->setLineWidth(0);
         displayImageLabel->setAlignment(Qt::AlignCenter);
         displayImageLabel->setIndent(0);
@@ -125,24 +138,48 @@ public:
         MainWindow->setStatusBar(statusBar);
         dockWidget = new QDockWidget(MainWindow);
         dockWidget->setObjectName(QStringLiteral("dockWidget"));
-        dockWidget->setMinimumSize(QSize(200, 305));
+        dockWidget->setMinimumSize(QSize(200, 317));
+        dockWidget->setAutoFillBackground(false);
+        dockWidget->setStyleSheet(QStringLiteral(""));
         dockWidgetContents = new QWidget();
         dockWidgetContents->setObjectName(QStringLiteral("dockWidgetContents"));
+        dockWidgetContents->setStyleSheet(QLatin1String("#dockWidgetContents {\n"
+"background:#333333;\n"
+"}"));
         formLayout = new QFormLayout(dockWidgetContents);
         formLayout->setSpacing(6);
         formLayout->setContentsMargins(11, 11, 11, 11);
         formLayout->setObjectName(QStringLiteral("formLayout"));
         toolBox = new QToolBox(dockWidgetContents);
         toolBox->setObjectName(QStringLiteral("toolBox"));
+        toolBox->setStyleSheet(QLatin1String("#toolBox {\n"
+"	background: #333333;\n"
+"}\n"
+"\n"
+"QWidget { \n"
+"	color : #1793D1;\n"
+"	background:#333333;\n"
+"	font: 75 14pt \"Terminus (TTF)\";\n"
+"    font-weight:bold;\n"
+" }\n"
+"\n"
+"QPushButton {\n"
+"	background : #1793D1;\n"
+"	color:black;\n"
+"}\n"
+""));
         page = new QWidget();
         page->setObjectName(QStringLiteral("page"));
-        page->setGeometry(QRect(0, 0, 182, 78));
+        page->setGeometry(QRect(0, 0, 168, 82));
+        page->setStyleSheet(QStringLiteral(""));
         verticalLayout_2 = new QVBoxLayout(page);
         verticalLayout_2->setSpacing(6);
         verticalLayout_2->setContentsMargins(11, 11, 11, 11);
         verticalLayout_2->setObjectName(QStringLiteral("verticalLayout_2"));
         openImageButton = new QPushButton(page);
         openImageButton->setObjectName(QStringLiteral("openImageButton"));
+        openImageButton->setAutoFillBackground(false);
+        openImageButton->setStyleSheet(QStringLiteral(""));
 
         verticalLayout_2->addWidget(openImageButton);
 
@@ -154,7 +191,8 @@ public:
         toolBox->addItem(page, QStringLiteral("Open/Save"));
         page_3 = new QWidget();
         page_3->setObjectName(QStringLiteral("page_3"));
-        page_3->setGeometry(QRect(0, 0, 168, 78));
+        page_3->setGeometry(QRect(0, 0, 168, 82));
+        page_3->setStyleSheet(QStringLiteral(""));
         verticalLayout_3 = new QVBoxLayout(page_3);
         verticalLayout_3->setSpacing(6);
         verticalLayout_3->setContentsMargins(11, 11, 11, 11);
@@ -172,7 +210,8 @@ public:
         toolBox->addItem(page_3, QStringLiteral("Binarization"));
         page_2 = new QWidget();
         page_2->setObjectName(QStringLiteral("page_2"));
-        page_2->setGeometry(QRect(0, 0, 182, 79));
+        page_2->setGeometry(QRect(0, 0, 168, 82));
+        page_2->setStyleSheet(QStringLiteral(""));
         gridLayout_2 = new QGridLayout(page_2);
         gridLayout_2->setSpacing(6);
         gridLayout_2->setContentsMargins(11, 11, 11, 11);
@@ -191,7 +230,8 @@ public:
         toolBox->addItem(page_2, QStringLiteral("Posterize"));
         EdgeDetection = new QWidget();
         EdgeDetection->setObjectName(QStringLiteral("EdgeDetection"));
-        EdgeDetection->setGeometry(QRect(0, 0, 182, 120));
+        EdgeDetection->setGeometry(QRect(0, 0, 168, 124));
+        EdgeDetection->setStyleSheet(QStringLiteral(""));
         verticalLayout_4 = new QVBoxLayout(EdgeDetection);
         verticalLayout_4->setSpacing(6);
         verticalLayout_4->setContentsMargins(11, 11, 11, 11);
@@ -222,7 +262,8 @@ public:
         toolBox->addItem(EdgeDetection, QStringLiteral("Edge detection"));
         page_4 = new QWidget();
         page_4->setObjectName(QStringLiteral("page_4"));
-        page_4->setGeometry(QRect(0, 0, 182, 79));
+        page_4->setGeometry(QRect(0, 0, 168, 82));
+        page_4->setStyleSheet(QStringLiteral(""));
         verticalLayout_5 = new QVBoxLayout(page_4);
         verticalLayout_5->setSpacing(6);
         verticalLayout_5->setContentsMargins(11, 11, 11, 11);
@@ -242,6 +283,7 @@ public:
         page_5 = new QWidget();
         page_5->setObjectName(QStringLiteral("page_5"));
         page_5->setGeometry(QRect(0, 0, 182, 68));
+        page_5->setStyleSheet(QStringLiteral(""));
         verticalLayout_6 = new QVBoxLayout(page_5);
         verticalLayout_6->setSpacing(6);
         verticalLayout_6->setContentsMargins(11, 11, 11, 11);
@@ -257,6 +299,15 @@ public:
 
         dockWidget->setWidget(dockWidgetContents);
         MainWindow->addDockWidget(static_cast<Qt::DockWidgetArea>(1), dockWidget);
+        toolBar = new QToolBar(MainWindow);
+        toolBar->setObjectName(QStringLiteral("toolBar"));
+        MainWindow->addToolBar(Qt::TopToolBarArea, toolBar);
+        toolBar_2 = new QToolBar(MainWindow);
+        toolBar_2->setObjectName(QStringLiteral("toolBar_2"));
+        MainWindow->addToolBar(Qt::TopToolBarArea, toolBar_2);
+        toolBar_3 = new QToolBar(MainWindow);
+        toolBar_3->setObjectName(QStringLiteral("toolBar_3"));
+        MainWindow->addToolBar(Qt::TopToolBarArea, toolBar_3);
 
         retranslateUi(MainWindow);
 
@@ -269,7 +320,7 @@ public:
     void retranslateUi(QMainWindow *MainWindow)
     {
         MainWindow->setWindowTitle(QApplication::translate("MainWindow", "MainWindow", nullptr));
-        displayImageLabel->setText(QApplication::translate("MainWindow", "TextLabel", nullptr));
+        displayImageLabel->setText(QString());
         openImageButton->setText(QApplication::translate("MainWindow", "Open", nullptr));
         saveImageButton->setText(QApplication::translate("MainWindow", "Save", nullptr));
         toolBox->setItemText(toolBox->indexOf(page), QApplication::translate("MainWindow", "Open/Save", nullptr));
@@ -285,6 +336,9 @@ public:
         toolBox->setItemText(toolBox->indexOf(page_4), QApplication::translate("MainWindow", "Compression", nullptr));
         distortionButton->setText(QApplication::translate("MainWindow", "start", nullptr));
         toolBox->setItemText(toolBox->indexOf(page_5), QApplication::translate("MainWindow", "Distortion", nullptr));
+        toolBar->setWindowTitle(QApplication::translate("MainWindow", "toolBar", nullptr));
+        toolBar_2->setWindowTitle(QApplication::translate("MainWindow", "toolBar_2", nullptr));
+        toolBar_3->setWindowTitle(QApplication::translate("MainWindow", "toolBar_3", nullptr));
     } // retranslateUi
 
 };
