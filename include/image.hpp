@@ -239,6 +239,11 @@ namespace img {
 			return m_data.begin<std::conditional_t<t==Type::RGB, cv::Vec3b, unsigned char>>();
 		}
 
+		std::conditional_t<t==Type::RGB, cv::MatConstIterator_<cv::Vec3b>, cv::MatConstIterator_<unsigned char>> begin() const
+		{
+			return m_data.begin<std::conditional_t<t==Type::RGB, cv::Vec3b, unsigned char>>();
+		}
+
 		std::conditional_t<t==Type::RGB, cv::MatConstIterator_<cv::Vec3b>, cv::MatConstIterator_<unsigned char>> cbegin() const
 		{
 			return m_data.begin<std::conditional_t<t==Type::RGB, cv::Vec3b, unsigned char>>();
@@ -246,6 +251,11 @@ namespace img {
 
 
 		std::conditional_t<t==Type::RGB, cv::MatIterator_<cv::Vec3b>, cv::MatIterator_<unsigned char>> end()
+		{
+			return m_data.end<std::conditional_t<t==Type::RGB, cv::Vec3b, unsigned char>>();
+		}
+
+		std::conditional_t<t==Type::RGB, cv::MatConstIterator_<cv::Vec3b>, cv::MatConstIterator_<unsigned char>> end() const
 		{
 			return m_data.end<std::conditional_t<t==Type::RGB, cv::Vec3b, unsigned char>>();
 		}
