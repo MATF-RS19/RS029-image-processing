@@ -3,7 +3,6 @@
 #include <cmath>
 #include <mutex>
 
-
 // fuzzy c-means clustering
 // we have two clusters (black and white)
 // our aim is to partition pixels into these clusters
@@ -26,10 +25,7 @@ public:
 private:
 	const img::Image<img::Type::GRAYSCALE>& m_img;
 	img::Image<img::Type::GRAYSCALE> m_output;
-	// the centroid of a cluster 1
-	unsigned long long m_centroid_1;
-	// the centroid of a cluster 2
-	unsigned long long m_centroid_2;
+	std::pair<unsigned, unsigned> m_centroids;
 	std::mutex m_mutex; 
 
 	void fuzzification_help(int from, int to)
@@ -44,84 +40,68 @@ private:
 		img::start_threads(0, m_img.rows(), &fcm::fuzzification_help, this);
 	}
 
-	void centroids_help(unsigned& denominator_1, unsigned& denominator_2, int from, int to)
+	void centroids_help(std::pair<unsigned long long, unsigned long long>& c1_fraction, std::pair<unsigned long long, unsigned long long>& c2_fraction, int from, int to)
 	{
-		unsigned denominator_1_tmp = 0;
-		unsigned denominator_2_tmp = 0;
-		unsigned long long centroid_1_tmp = 0;
-		unsigned long long centroid_2_tmp = 0;
-
+		std::pair<unsigned long long, unsigned long long> c1_fraction_tmp;
+		std::pair<unsigned long long, unsigned long long> c2_fraction_tmp;
 
 		for (int i = from; i < to; i++) {
-			denominator_1_tmp += std::inner_product(m_output[i], m_output[i+1], m_output[i], 0u);
-			denominator_2_tmp += std::inner_product(m_output[i], m_output[i+1], m_output[i], 0u, std::plus<>(), [](auto&& lhs, auto&& rhs) { return (10-lhs)*(10-rhs); });
-			centroid_1_tmp += std::inner_product(m_output[i], m_output[i+1], m_img[i], 0ull, std::plus<>(), [](auto&& lhs, auto&& rhs) { return lhs*lhs*rhs; });
-			centroid_2_tmp += std::inner_product(m_output[i], m_output[i+1], m_img[i], 0ull, std::plus<>(), [](auto&& lhs, auto&& rhs) { return (10-lhs)*(10-lhs)*rhs; });
+			c1_fraction_tmp.second += std::inner_product(m_output[i], m_output[i+1], m_output[i], 0u);
+			c2_fraction_tmp.second += std::inner_product(m_output[i], m_output[i+1], m_output[i], 0u, std::plus<>(), [](auto&& lhs, auto&& rhs) { return (10-lhs)*(10-rhs); });
+			c1_fraction_tmp.first += std::inner_product(m_output[i], m_output[i+1], m_img[i], 0ull, std::plus<>(), [](auto&& lhs, auto&& rhs) { return lhs*lhs*rhs; });
+			c2_fraction_tmp.first += std::inner_product(m_output[i], m_output[i+1], m_img[i], 0ull, std::plus<>(), [](auto&& lhs, auto&& rhs) { return (10-lhs)*(10-lhs)*rhs; });
 		}
 
-		centroid_1_tmp /= 100;
-		centroid_2_tmp /= 100;
-		denominator_1_tmp /= 100;
-		denominator_2_tmp /= 100;
+		c1_fraction_tmp.first /= 100;
+		c1_fraction_tmp.second /= 100;
+		c2_fraction_tmp.first /= 100;
+		c2_fraction_tmp.second /= 100;
 
 		std::lock_guard<std::mutex> lock(m_mutex);
-		m_centroid_1 += centroid_1_tmp;
-		m_centroid_2 += centroid_2_tmp;
-		denominator_1 += denominator_1_tmp;
-		denominator_2 += denominator_2_tmp;
+		c1_fraction.first += c1_fraction_tmp.first;
+		c1_fraction.second += c1_fraction_tmp.second;
+		c2_fraction.first += c2_fraction_tmp.first;
+		c2_fraction.second += c2_fraction_tmp.second;
 	}
 
-	void centroids()
+	unsigned centroids()
 	{
-		m_centroid_1 = 0;
-		m_centroid_2 = 0;
+		std::pair<unsigned long long, unsigned long long> c1_fraction = {0,0};
+		std::pair<unsigned long long, unsigned long long> c2_fraction = {0,0};
+		img::start_threads(0, m_img.rows(), &fcm::centroids_help, this, c1_fraction, c2_fraction);
 
-		unsigned denominator_1 = 0;
-		unsigned denominator_2 = 0;
+		std::pair<unsigned, unsigned> centroids = m_centroids;
+		m_centroids = {c1_fraction.first/c1_fraction.second, c2_fraction.first/c2_fraction.second};
 
-		img::start_threads(0, m_img.rows(), &fcm::centroids_help, this, denominator_1, denominator_2);
-
-		m_centroid_1 /= denominator_1;
-		m_centroid_2 /= denominator_2;
+		return (centroids.first-m_centroids.first)*(centroids.first-m_centroids.first)+(centroids.second-m_centroids.second)*(centroids.second-m_centroids.second);
 	}
 
 
-	void update_weights_help(unsigned& eps, int from, int to)
+	void update_weights_help(int from, int to)
 	{
-		unsigned eps_tmp = 0;
-
 		for (int i = from; i < to; i++) {
 			for (int j = 0; j < m_img.cols(); j++) {
-				unsigned d1 = (m_centroid_1-m_img(i,j))*(m_centroid_1-m_img(i,j));
-				unsigned d2 = (m_centroid_2-m_img(i,j))*(m_centroid_2-m_img(i,j));
-				unsigned a = std::round(10.0*d2/(d1+d2));
-
-				eps_tmp += (m_output(i,j)-a)*(m_output(i,j)-a);
-
-				m_output(i,j) = a;
+				unsigned d1 = (m_centroids.first-m_img(i,j))*(m_centroids.first-m_img(i,j));
+				unsigned d2 = (m_centroids.second-m_img(i,j))*(m_centroids.second-m_img(i,j));
+				m_output(i,j) = std::round(10.0*d2/(d1+d2));
 			}
 		}
-
-		eps_tmp /= 100;
-
-		std::lock_guard<std::mutex> lock(m_mutex);
-		eps += eps_tmp;
 	}
 
-	unsigned update_weights()
+	void update_weights()
 	{
-		unsigned eps = 0;
-		img::start_threads(0, m_img.rows(), &fcm::update_weights_help, this, eps);
-		return eps;
+		img::start_threads(0, m_img.rows(), &fcm::update_weights_help, this);
 	}
 
 	void fuzzy_cmeans()
 	{
 		int max_iter = 0;
+		unsigned eps = 0;
 
 		do {
-			centroids();
-		} while(update_weights() > 1 && ++max_iter < 30);
+			eps = centroids();
+			update_weights();
+		} while(eps > 1 && ++max_iter < 30);
 	}
 
 	void defuzzification(int from, int to)
