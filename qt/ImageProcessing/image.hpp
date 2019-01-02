@@ -156,6 +156,13 @@ namespace img {
 			return m_data.cols;
 		}
 
+
+		void save(const std::experimental::filesystem::path& path) const
+		{
+            if (!path.empty() && !m_data.empty())
+                imwrite(path.string(), m_data);
+		}
+
 		void show() const
 		{
 			namedWindow("Display window", cv::WINDOW_AUTOSIZE);
@@ -200,32 +207,64 @@ namespace img {
 
 		unsigned pixel_sum(unsigned i, unsigned j) const;
 
-		std::conditional_t<t==Type::RGB, cv::Vec3b, unsigned char>& operator()(unsigned i, unsigned j);
-		const std::conditional_t<t==Type::RGB, cv::Vec3b, unsigned char>& operator()(unsigned i, unsigned j) const;
-
-		std::conditional_t<t==Type::RGB, cv::Vec3b, unsigned char>& operator()(const std::pair<unsigned, unsigned>& p);
-		const std::conditional_t<t==Type::RGB, cv::Vec3b, unsigned char>& operator()(const std::pair<unsigned, unsigned>& p) const;
-
-		void save(const std::experimental::filesystem::path& path) const
-		{
-            if (!path.empty() && !m_data.empty())
-                imwrite(path.string(), m_data);
-		}
-
-		std::conditional_t<t==Type::RGB, cv::MatIterator_<cv::Vec3b>, cv::MatIterator_<unsigned char>> begin();
-		std::conditional_t<t==Type::RGB, cv::MatIterator_<cv::Vec3b>, cv::MatIterator_<unsigned char>> end();
-
-		std::conditional_t<t==Type::RGB, cv::MatConstIterator_<cv::Vec3b>, cv::MatConstIterator_<unsigned char>> cbegin() const;
-		std::conditional_t<t==Type::RGB, cv::MatConstIterator_<cv::Vec3b>, cv::MatConstIterator_<unsigned char>> cend() const;
-
-		std::conditional_t<t==Type::RGB, cv::MatIterator_<cv::Vec3b>, cv::MatIterator_<unsigned char>> operator[](unsigned i);
-		std::conditional_t<t==Type::RGB, cv::MatConstIterator_<cv::Vec3b>, cv::MatConstIterator_<unsigned char>> operator[](unsigned i) const;
-
 		// 5x5 gaussian filter with standard deviation 1.4
 		Image<Type::GRAYSCALE> gaussian_blur() const;
 
 		Image<Type::GRAYSCALE> grayscale() const;
 		Image<Type::GRAYSCALE> black_white() const;
+
+		std::conditional_t<t==Type::RGB, cv::Vec3b, unsigned char>& operator()(unsigned i, unsigned j)
+		{
+			return m_data.at<std::conditional_t<t==Type::RGB, cv::Vec3b, unsigned char>>(i,j);
+		}
+
+		const std::conditional_t<t==Type::RGB, cv::Vec3b, unsigned char>& operator()(unsigned i, unsigned j) const
+		{
+			return m_data.at<std::conditional_t<t==Type::RGB, cv::Vec3b, unsigned char>>(i,j);
+		}
+
+		std::conditional_t<t==Type::RGB, cv::Vec3b, unsigned char>& operator()(const std::pair<unsigned, unsigned>& p)
+		{
+			return m_data.at<std::conditional_t<t==Type::RGB, cv::Vec3b, unsigned char>>(p.first, p.second);
+		}
+
+		const std::conditional_t<t==Type::RGB, cv::Vec3b, unsigned char>& operator()(const std::pair<unsigned, unsigned>& p) const 
+		{
+			return m_data.at<std::conditional_t<t==Type::RGB, cv::Vec3b, unsigned char>>(p.first, p.second);
+		}
+
+
+		std::conditional_t<t==Type::RGB, cv::MatIterator_<cv::Vec3b>, cv::MatIterator_<unsigned char>> begin()
+		{
+			return m_data.begin<std::conditional_t<t==Type::RGB, cv::Vec3b, unsigned char>>();
+		}
+
+		std::conditional_t<t==Type::RGB, cv::MatConstIterator_<cv::Vec3b>, cv::MatConstIterator_<unsigned char>> cbegin() const
+		{
+			return m_data.begin<std::conditional_t<t==Type::RGB, cv::Vec3b, unsigned char>>();
+		}
+
+
+		std::conditional_t<t==Type::RGB, cv::MatIterator_<cv::Vec3b>, cv::MatIterator_<unsigned char>> end()
+		{
+			return m_data.end<std::conditional_t<t==Type::RGB, cv::Vec3b, unsigned char>>();
+		}
+
+		std::conditional_t<t==Type::RGB, cv::MatConstIterator_<cv::Vec3b>, cv::MatConstIterator_<unsigned char>> cend() const
+		{
+			return m_data.end<std::conditional_t<t==Type::RGB, cv::Vec3b, unsigned char>>();
+		}
+
+		std::conditional_t<t==Type::RGB, cv::MatIterator_<cv::Vec3b>, cv::MatIterator_<unsigned char>> operator[](unsigned i)
+		{
+			return m_data.begin<std::conditional_t<t==Type::RGB, cv::Vec3b, unsigned char>>() + i*cols();
+		}
+
+		std::conditional_t<t==Type::RGB, cv::MatConstIterator_<cv::Vec3b>, cv::MatConstIterator_<unsigned char>> operator[](unsigned i) const
+		{
+			return m_data.begin<std::conditional_t<t==Type::RGB, cv::Vec3b, unsigned char>>() + i*cols();
+		}
+
 	};
 
 }; // end of namespace img
