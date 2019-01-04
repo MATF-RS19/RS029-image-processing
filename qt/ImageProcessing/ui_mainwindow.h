@@ -74,6 +74,7 @@ public:
         if (MainWindow->objectName().isEmpty())
             MainWindow->setObjectName(QStringLiteral("MainWindow"));
         MainWindow->resize(781, 435);
+        MainWindow->setMinimumSize(QSize(640, 405));
         QFont font;
         font.setPointSize(50);
         MainWindow->setFont(font);

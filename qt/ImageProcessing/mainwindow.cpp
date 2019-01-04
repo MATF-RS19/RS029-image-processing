@@ -29,7 +29,16 @@ MainWindow::~MainWindow()
 bool MainWindow::eventFilter(QObject *obj, QEvent *event)
 {
   if (event->type() == QEvent::Resize && obj == ui->frame) {
-      display_image(im);
+      // display transformed image and return true if it is defined, otherwise return false
+       bool ind = std::visit([this](auto&& i) {
+            if (!i) return false;
+              display_image(i);
+              return true;
+        }, im_transformed);
+
+       // if there is no transformed image display the original one
+       if (!ind)
+           display_image(im);
   }
   return QWidget::eventFilter(obj, event);
 }
