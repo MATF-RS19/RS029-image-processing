@@ -18,6 +18,7 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->setupUi(this);
     connect(ui->displayImageLabel, SIGNAL(sendPoints(QVector<QPoint>&)), this, SLOT(remove_distortion(QVector<QPoint>&)));
     ui->frame->installEventFilter(this);
+
 }
 
 MainWindow::~MainWindow()

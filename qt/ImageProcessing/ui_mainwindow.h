@@ -132,6 +132,7 @@ public:
         sizePolicy.setVerticalStretch(0);
         sizePolicy.setHeightForWidth(displayImageLabel->sizePolicy().hasHeightForWidth());
         displayImageLabel->setSizePolicy(sizePolicy);
+        displayImageLabel->setMinimumSize(QSize(10, 10));
         QFont font1;
         font1.setPointSize(50);
         font1.setBold(false);

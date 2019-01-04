@@ -95,6 +95,12 @@ background:#333333;
            <verstretch>0</verstretch>
           </sizepolicy>
          </property>
+         <property name="minimumSize">
+          <size>
+           <width>10</width>
+           <height>10</height>
+          </size>
+         </property>
          <property name="font">
           <font>
            <pointsize>50</pointsize>
