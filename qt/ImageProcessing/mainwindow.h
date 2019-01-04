@@ -23,6 +23,8 @@ private:
     void display_image(const auto& im);
 
 private slots:
+    bool eventFilter(QObject *obj, QEvent *event);
+
     void on_openImageButton_clicked();
 
     void on_binarizeFcmButton_clicked();

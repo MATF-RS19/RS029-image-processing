@@ -40,6 +40,9 @@ QPushButton:hover {
 	color: white;
 }
 
+QMenuBar {
+	font: 75 14pt &quot;Terminus (TTF)&quot;;
+}
 </string>
   </property>
   <widget class="QWidget" name="centralWidget">
@@ -416,12 +419,12 @@ QPushButton:hover {
      <x>0</x>
      <y>0</y>
      <width>781</width>
-     <height>24</height>
+     <height>26</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuIP">
     <property name="title">
-     <string></string>
+     <string> ImageProcessing</string>
     </property>
    </widget>
    <addaction name="menuIP"/>

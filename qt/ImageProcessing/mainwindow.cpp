@@ -17,11 +17,20 @@ MainWindow::MainWindow(QWidget *parent) :
 {
     ui->setupUi(this);
     connect(ui->displayImageLabel, SIGNAL(sendPoints(QVector<QPoint>&)), this, SLOT(remove_distortion(QVector<QPoint>&)));
+    ui->frame->installEventFilter(this);
 }
 
 MainWindow::~MainWindow()
 {
     delete ui;
+}
+
+bool MainWindow::eventFilter(QObject *obj, QEvent *event)
+{
+  if (event->type() == QEvent::Resize && obj == ui->frame) {
+      display_image(im);
+  }
+  return QWidget::eventFilter(obj, event);
 }
 
 

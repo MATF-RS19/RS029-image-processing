@@ -98,6 +98,9 @@ public:
 "	color: white;\n"
 "}\n"
 "\n"
+"QMenuBar {\n"
+"	font: 75 14pt \"Terminus (TTF)\";\n"
+"}\n"
 ""));
         centralWidget = new QWidget(MainWindow);
         centralWidget->setObjectName(QStringLiteral("centralWidget"));
@@ -332,7 +335,7 @@ public:
         MainWindow->addDockWidget(static_cast<Qt::DockWidgetArea>(1), dockWidget);
         menuBar = new QMenuBar(MainWindow);
         menuBar->setObjectName(QStringLiteral("menuBar"));
-        menuBar->setGeometry(QRect(0, 0, 781, 24));
+        menuBar->setGeometry(QRect(0, 0, 781, 26));
         menuIP = new QMenu(menuBar);
         menuIP->setObjectName(QStringLiteral("menuIP"));
         MainWindow->setMenuBar(menuBar);
@@ -366,7 +369,7 @@ public:
         toolBox->setItemText(toolBox->indexOf(compression), QApplication::translate("MainWindow", "Compression", nullptr));
         distortionButton->setText(QApplication::translate("MainWindow", "start", nullptr));
         toolBox->setItemText(toolBox->indexOf(distortion), QApplication::translate("MainWindow", "Distortion", nullptr));
-        menuIP->setTitle(QApplication::translate("MainWindow", "\357\204\240", nullptr));
+        menuIP->setTitle(QApplication::translate("MainWindow", "\357\204\240 ImageProcessing", nullptr));
     } // retranslateUi
 
 };
