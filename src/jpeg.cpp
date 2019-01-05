@@ -10,12 +10,13 @@
 
 int main()
 {
+        
         img::Image<img::Type::RGB> img("images/cat.jpg");
         int rows = img.rows();
         int columns = img.cols();
         img::Image<img::Type::RGB> output(rows, columns);
 
-        
+        /*
         // RGB to HSI
         for (int i = 0; i < rows; ++i) {
                 for (int j = 0; j < columns; ++j) {
@@ -36,7 +37,7 @@ int main()
                 }
         }
         
-        /*
+        
         // RGB to HSB
         for (int i = 0; i < rows; ++i) {
                 for (int j = 0; j < columns; ++j) {
@@ -80,24 +81,26 @@ int main()
                         }
                 }
         }
-
+        */
         // RGB to YCbCr
+        // formula source: https://www.w3.org/Graphics/JPEG/jfif3.pdf
+
         for (int i = 0; i < rows; ++i) {
                 for (int j = 0; j < columns; ++j) {
                         int Y = std::round(
-                                16 + 0.2567890625 * img.red() 
-                               + 0.50412890625 * img.green() 
-                               + 0.09790625 * img.blue()
+                                0.299 * img.red(i, j) 
+                                + 0.587 * img.green(i, j) 
+                                + 0.114 * img.blue(i, j)
                                 );
                         int Cb = std::round(
-                                128 - 0.14822265625 * img.red()
-                                 - 0.2909921875 * img.green()
-                                 + 0.43921484375 * img.blue()
+                                128 - 0.1687 * img.red(i, j)
+                                - 0.3313 * img.green(i, j)
+                                + 0.5 * img.blue(i, j)
                                 );  
                         int Cr = std::round(
-                                128 + 0.43921484375 * img.red()
-                                 - 0.3677890625 * img.green()
-                                 - 0.07142578125 * img.blue()
+                                128 + 0.5 * img.red(i, j)
+                                - 0.4187 * img.green(i, j)
+                                - 0.0813 * img.blue(i, j)
                             );
 
                         cv::Vec3f yCrCbPixel(Cr, Cb, Y);
@@ -105,7 +108,7 @@ int main()
                         
                 }
         }
-        */
+        
         /*
         // DCT
         Eigen::MatrixXf M(8,8);
