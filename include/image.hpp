@@ -206,6 +206,10 @@ namespace img {
 		}
 
 		unsigned pixel_sum(unsigned i, unsigned j) const;
+		
+		unsigned red(unsigned i, unsigned j) const;
+		unsigned green(unsigned i, unsigned j) const;
+		unsigned blue(unsigned i, unsigned j) const;
 
 		// 5x5 gaussian filter with standard deviation 1.4
 		Image<Type::GRAYSCALE> gaussian_blur() const;

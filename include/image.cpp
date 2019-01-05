@@ -119,3 +119,21 @@ Image<Type::GRAYSCALE> Image<Type::GRAYSCALE>::gaussian_blur() const
 
 	return output;
 }
+
+template<>
+unsigned Image<Type::RGB>::red(unsigned i, unsigned j) const
+{
+	return m_data.at<cv::Vec3b>(i, j)[R];
+}
+
+template<>
+unsigned Image<Type::RGB>::green(unsigned i, unsigned j) const
+{
+	return m_data.at<cv::Vec3b>(i, j)[G];
+}
+
+template<>
+unsigned Image<Type::RGB>::blue(unsigned i, unsigned j) const
+{
+	return m_data.at<cv::Vec3b>(i, j)[B];
+}
