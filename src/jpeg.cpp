@@ -11,7 +11,7 @@
 int main()
 {
         
-        img::Image<img::Type::RGB> img("images/cat.jpg");
+        img::Image<img::Type::RGB> img("2.jpeg");
         int rows = img.rows();
         int columns = img.cols();
         img::Image<img::Type::RGB> output(rows, columns);
@@ -81,7 +81,33 @@ int main()
                         }
                 }
         }
+        
+        //  YCrCb to RGB
+        // formula source: https://www.w3.org/Graphics/JPEG/jfif3.pdf
+
+        for (int i = 0; i < rows; ++i) {
+                for (int j = 0; j < columns; ++j) {
+                        int R = std::round(
+                                img.red(i, j) 
+                                + 1.402 * (img.green(i, j) - 128) 
+                                );
+                        int G = std::round(
+                                img.red(i, j)
+                                - 0.34414 * (img.blue(i, j) - 128)
+                                - 0.71414 * (img.green(i, j) - 128)
+                                );  
+                        int B = std::round(
+                                img.red(i, j) + 1.772 * (img.blue(i, j) - 128)
+                                );
+
+                        cv::Vec3f RGB(B, G, R);
+                        output(i,j) = RGB;
+                        
+                }
+        }
+
         */
+
         // RGB to YCbCr
         // formula source: https://www.w3.org/Graphics/JPEG/jfif3.pdf
 
@@ -103,11 +129,15 @@ int main()
                                 - 0.0813 * img.blue(i, j)
                             );
 
-                        cv::Vec3f yCrCbPixel(Cr, Cb, Y);
+                        cv::Vec3f yCrCbPixel(Y, Cr, Cb);
                         output(i,j) = yCrCbPixel;
                         
                 }
         }
+        
+        
+        
+
         
         /*
         // DCT
