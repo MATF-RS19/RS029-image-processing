@@ -3,6 +3,9 @@ CXXFLAGS = -std=c++17 -I include
 LDLIBS  = -lstdc++fs `pkg-config opencv --cflags --libs` -pthread
 WFLAGS = -Wall -Wextra -O3
 
+fuzzy_image_enhancement: src/fuzzy_image_enhancement.cpp image.o
+	$(CXX) -o $@ $^ $(CXXFLAGS) $(WFLAGS) $(LDLIBS)
+
 histogram: src/histogram.cpp image.o
 	$(CXX) -o $@ $^ $(CXXFLAGS) $(WFLAGS) $(LDLIBS) 
 
