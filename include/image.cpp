@@ -137,3 +137,22 @@ unsigned Image<Type::RGB>::blue(unsigned i, unsigned j) const
 {
 	return m_data.at<cv::Vec3b>(i, j)[B];
 }
+
+// Samarth Jain, Megha Soni
+// "Digital Image Quality Enhancement Using Compound Contrast Enhancement Process"
+// IJEDR, Volume 6, Issue 3
+// https://www.ijedr.org/papers/IJEDR1803071.pdf
+
+template<>
+Image<Type::GRAYSCALE> Image<Type::GRAYSCALE>::negative() const
+{
+	Image<Type::GRAYSCALE> output(rows(), cols());
+
+    for (int i = 0; i < rows(); i++) {
+        for (int j = 0; j <  cols(); ++j) {
+            output(i, j) = 256 - 1 - (*this)(i, j); 
+        }
+    }
+
+	return output;
+}
