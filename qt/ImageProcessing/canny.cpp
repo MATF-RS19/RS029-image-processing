@@ -10,9 +10,9 @@ class canny_detector {
 public:
 	canny_detector(const img::Image<img::Type::GRAYSCALE>& img)
 		: m_magnitude(img.rows(), std::vector<float>(img.cols(), 0)),
-		  m_angles(img.rows(), std::vector<float>(img.cols(), 0)),
-		  m_output(img.rows(), img.cols()),
-		  m_img(img)
+		m_angles(img.rows(), std::vector<float>(img.cols(), 0)),
+		m_output(img.rows(), img.cols()),
+		m_img(img)
 	{}
 
 	const img::Image<img::Type::GRAYSCALE>& canny(int lower_threshold = 20, int upper_threshold = 60)
@@ -41,17 +41,17 @@ private:
 	void sobel_operator_help(int from, int to)
 	{
 		std::vector<int> GX{-1, 0, 1,
-							-2, 0, 2,
-							-1, 0, 1};
+			-2, 0, 2,
+			-1, 0, 1};
 		std::vector<int> GY{-1, -2, -1,
-							0, 0, 0,
-							1, 2, 1};
+			0, 0, 0,
+			1, 2, 1};
 
 		for (int i = from; i < to; ++i) {
 			for (int j = 0; j <= m_img.cols()-sobel_filter_size; ++j) {
 				std::vector<int> current{m_output(i,j), m_output(i,j+1), m_output(i,j+2), 
-										m_output(i+1,j), m_output(i+1,j+1), m_output(i+1,j+2), 
-										m_output(i+2,j), m_output(i+2,j+1), m_output(i+2,j+2)};
+					m_output(i+1,j), m_output(i+1,j+1), m_output(i+1,j+2), 
+					m_output(i+2,j), m_output(i+2,j+1), m_output(i+2,j+2)};
 
 				int sx = std::inner_product(GX.cbegin(), GX.cend(), current.cbegin(), 0);
 				int sy = std::inner_product(GY.cbegin(), GY.cend(), current.cbegin(), 0);
@@ -64,13 +64,13 @@ private:
 				float theta = std::atan(sy/(double)sx) * 180 / pi;
 				if (theta < 0) theta += 180;
 
-				// get gradient direction - there are only 4 directions
+				// get a gradient direction - there are only 4 directions
 				// a line is always perpendicular to the gradient direction
-				
+
 				m_angles[ic][jc] = (theta > 112.5 && theta <= 157.5) ? 135
-									: (theta > 67.5 && theta <= 112.5) ? 90
-									: (theta > 22.5 && theta <= 67.5) ? 45
-									: 0;
+					: (theta > 67.5 && theta <= 112.5) ? 90
+					: (theta > 22.5 && theta <= 67.5) ? 45
+					: 0;
 			}
 		}
 	}
@@ -188,7 +188,7 @@ private:
 
 					// we definitely color marked pixel so we wouldn't check it any more
 					m_output(i,j) = img::WHITE;
-					
+
 					// try to mark neighbours as edge
 					if (check_neighbours({i, j}, lower_threshold))
 						change = true;

@@ -3,6 +3,7 @@
 #include <mutex>
 #include <Eigen/Dense>
 
+// k-means algorithm for image binarization
 class kmeans {
 public:
 	kmeans(const img::Image<img::Type::GRAYSCALE>& img, int maxiter = 100)
@@ -17,7 +18,6 @@ public:
 		if (m_centroids.first > m_centroids.second)
 			std::swap(m_centroids.first,m_centroids.second);
 
-
 		for (int i = 0; i < m_maxiter; i++) {
 			if (update() < 5)
 				break;
@@ -27,7 +27,6 @@ public:
 	}
 
 private:
-	std::mutex m_mutex;
 	// input image
 	const img::Image<img::Type::GRAYSCALE>& m_img;
 	// resulting image
@@ -36,7 +35,9 @@ private:
 	std::pair<int, int> m_centroids;
 	// maximum number of iteration
 	int m_maxiter;
+	std::mutex m_mutex;
 
+	// the first centroid is an average of pixels
 	void set_first_centroid_help(unsigned long long& sum, int from, int to)
 	{
 		unsigned long long sum_tmp = std::accumulate(m_img[from], m_img[to], 0ull);
@@ -52,19 +53,20 @@ private:
 		m_centroids.first = sum/m_img.pixels();
 	}
 
+	// the second centroid is the pixel that is farthest from the first centroid
 	void set_second_centroid_help(int& maxd, int from, int to)
 	{
 		int maxd_tmp = 0;
 		int centroid_tmp;
 
 		std::for_each(m_img[from], m_img[to], [&](auto&& p) {
-			int d = std::abs(p-m_centroids.first);
+					int d = std::abs(p-m_centroids.first);
 
-			if (d > maxd_tmp) {
-				centroid_tmp = p;
-				maxd_tmp = d;
-			}
-		});
+					if (d > maxd_tmp) {
+						centroid_tmp = p;
+						maxd_tmp = d;
+					}
+				});
 
 		std::lock_guard<std::mutex> lock(m_mutex);
 		if (maxd_tmp > maxd) {
@@ -79,10 +81,9 @@ private:
 		img::start_threads(0, m_img.rows(), &kmeans::set_second_centroid_help, this, maxd);
 	}
 
-	// update output, get new centroids and objective function value
+	// update output and get new centroids
 	void update_help(std::pair<unsigned long long, unsigned long long>& new_centroids, std::pair<int, int>& counter, int from, int to)
 	{
-		unsigned long long f_tmp = 0;
 		std::pair<unsigned long long, unsigned long long> new_centroids_tmp{0,0};
 		std::pair<int,int> counter_tmp{0,0};
 
@@ -93,14 +94,12 @@ private:
 				if (std::abs(m_centroids.first-p) <= std::abs(m_centroids.second-p)) {
 					m_output[x][y] = img::BLACK;
 
-					f_tmp += (p-m_centroids.first)*(p-m_centroids.first);
 					new_centroids_tmp.first += p;
 					counter_tmp.first++;
 				}
 				else {
 					m_output[x][y] = img::WHITE;
 
-					f_tmp += (p-m_centroids.second)*(p-m_centroids.second);
 					new_centroids_tmp.second += p;
 					counter_tmp.second++;
 				}
@@ -118,7 +117,7 @@ private:
 	{
 		std::pair<unsigned long long, unsigned long long> new_centroids{0,0};
 		std::pair<int, int> counter{0,0};
-		
+
 		img::start_threads(0, m_img.rows(), &kmeans::update_help, this, new_centroids, counter);
 
 		if (counter.first)

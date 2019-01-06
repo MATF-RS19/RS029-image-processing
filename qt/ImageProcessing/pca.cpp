@@ -11,22 +11,22 @@ std::vector<double> vector(const Eigen::VectorXd& v)
 
 img::Image<img::Type::RGB> pca(const img::Image<img::Type::RGB>& img, int k)
 {
-    int n, d;
-    bool transpose = false;
+	int n, d;
+	bool transpose = false;
 
-    if (img.rows() <= img.cols()) {
-        d = img.rows(); // dimenstions
-        n = img.cols();
-    }
-    else {
-        d = img.cols(); // dimenstions
-        n = img.rows();
-        transpose = true;
-    }
+	if (img.rows() <= img.cols()) {
+		d = img.rows(); // dimenstions
+		n = img.cols();
+	}
+	else {
+		d = img.cols(); // dimenstions
+		n = img.rows();
+		transpose = true;
+	}
 
-    k = std::min(k, d); // cannot take more than number of dimensions
+	k = std::min(k, d); // cannot take more than number of dimensions
 
-    img::Image<img::Type::RGB> compressed(img.rows(), img.cols());
+	img::Image<img::Type::RGB> compressed(img.rows(), img.cols());
 
 
 	for (int c = 0; c < 3; c++) {
@@ -34,10 +34,10 @@ img::Image<img::Type::RGB> pca(const img::Image<img::Type::RGB>& img, int k)
 
 		for (int i = 0; i < d; i++) {
 			for (int j = 0; j < n; j++) {
-                if (transpose)
-                    A(i, j) = img(j,i)[c];
-                else
-                    A(i, j) = img(i,j)[c];
+				if (transpose)
+					A(i, j) = img(j,i)[c];
+				else
+					A(i, j) = img(i,j)[c];
 			}
 		}
 
@@ -52,11 +52,11 @@ img::Image<img::Type::RGB> pca(const img::Image<img::Type::RGB>& img, int k)
 
 		std::vector<double> eigen_values = vector(s.eigenvalues().real());
 		auto sorted_eigen_values = ranges::view::zip(eigen_values, ranges::view::ints(0)) 
-									| ranges::v3::to_vector
-									| ranges::action::sort(std::greater<std::pair<double, int>>{});
+			| ranges::v3::to_vector
+			| ranges::action::sort(std::greater<std::pair<double, int>>{});
 		auto eigen_indices = sorted_eigen_values
-					| ranges::view::transform([] (auto&& value) { return value.second; })
-					| ranges::view::take(k);
+			| ranges::view::transform([] (auto&& value) { return value.second; })
+			| ranges::view::take(k);
 
 
 		const Eigen::MatrixXd& eigen_vectors = s.eigenvectors().real();
@@ -69,15 +69,15 @@ img::Image<img::Type::RGB> pca(const img::Image<img::Type::RGB>& img, int k)
 		Eigen::MatrixXd Reconstruction = (P.transpose()*Projected).colwise() + mean_vec;
 
 
-        for (int i = 0; i < compressed.rows(); i++) {
-            for (int j = 0; j < compressed.cols(); j++) {
-                if (transpose)
-                    compressed(i,j)[c] = (Reconstruction(j, i) < 0) ? 0 : Reconstruction(j,i);
-                else
-                    compressed(i,j)[c] = (Reconstruction(i,j) < 0) ? 0 : Reconstruction(i,j);
+		for (int i = 0; i < compressed.rows(); i++) {
+			for (int j = 0; j < compressed.cols(); j++) {
+				if (transpose)
+					compressed(i,j)[c] = (Reconstruction(j, i) < 0) ? 0 : Reconstruction(j,i);
+				else
+					compressed(i,j)[c] = (Reconstruction(i,j) < 0) ? 0 : Reconstruction(i,j);
 			}
 		}
 	}
 
-    return compressed;
+	return compressed;
 }

@@ -8,8 +8,8 @@ class fcm {
 public:
 	fcm(const img::Image<img::Type::GRAYSCALE>& img)
 		: m_img(img),
-		  m_output(img.rows(), img.cols()),
-		  m_w1(img.rows(), std::vector<float>(img.cols(), 0))
+		m_output(img.rows(), img.cols()),
+		m_w1(img.rows(), std::vector<float>(img.cols(), 0))
 	{
 		fuzzification();
 	}
@@ -22,9 +22,14 @@ public:
 	}
 
 private:
+	// input image
 	const img::Image<img::Type::GRAYSCALE>& m_img;
+	// binarized image
 	img::Image<img::Type::GRAYSCALE> m_output;
+	// m_w1[i][j] describes how much pixel (i,j) belongs to the first cluster (white)
+	// 1-m_w1[i][j] describes how much pixel (i,j) belongs to the second cluster (black)
 	std::vector<std::vector<float>> m_w1;
+	// centroids of white and black cluster
 	std::pair<float, float> m_centroids;
 
 	void fuzzification()
@@ -36,6 +41,7 @@ private:
 		}
 	}
 
+	// get centroids based on weights and return the distance from the previous centroids
 	float centroids()
 	{
 		std::pair<float, float> c1_fraction = {0,0};
@@ -79,6 +85,7 @@ private:
 		} while(eps > 1 && ++max_iter < 30);
 	}
 
+	// cluster each pixel of the output image
 	void defuzzification()
 	{
 		for (int i = 0; i < m_img.rows(); i++) {

@@ -96,20 +96,20 @@ cv::Vec3b f(const img::Image<img::Type::RGB>& img, double xd, double yd)
 }
 
 img::Image<img::Type::RGB> distortion(const img::Image<img::Type::RGB>& image,
-                                      const std::vector<std::pair<float, float>>& points_in,
-                                      const std::vector<std::pair<float, float>>& points_out)
+		const std::vector<std::pair<float, float>>& points_in,
+		const std::vector<std::pair<float, float>>& points_out)
 {
-    for (int j=0; j<4; j++) {
-        M.col(j) << points_in[j].first, points_in[j].second, 1;
-        MP.col(j) << points_out[j].first, points_out[j].second, 1;
-    }
+	for (int j=0; j<4; j++) {
+		M.col(j) << points_in[j].first, points_in[j].second, 1;
+		MP.col(j) << points_out[j].first, points_out[j].second, 1;
+	}
 
 	MP.col(1)[0] = MP.col(0)[0];
 	MP.col(1)[1] = MP.col(2)[1];
 	MP.col(3)[0] = MP.col(2)[0];
 	MP.col(3)[1] = MP.col(0)[1];
 
-    img::Image<img::Type::RGB> output(image.rows(), image.cols());
+	img::Image<img::Type::RGB> output(image.rows(), image.cols());
 
 	Eigen::Vector3d lambda = M.block(0, 0, 3, 3).inverse()*M.col(3);
 	Eigen::MatrixXd P1(3,3);
@@ -135,5 +135,5 @@ img::Image<img::Type::RGB> distortion(const img::Image<img::Type::RGB>& image,
 		}
 	}
 
-    return output;
+	return output;
 }

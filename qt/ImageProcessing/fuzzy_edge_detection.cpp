@@ -4,11 +4,12 @@
 #include <thread>
 #include <mutex>
 
+// class implements fuzzy edge detection alorithm
 class fed {
 public:
 	fed(const img::Image<img::Type::GRAYSCALE>& img)
 		: m_img(img),
-		  m_mi(img.rows(), std::vector<unsigned>(img.cols(), 0))
+		m_mi(img.rows(), std::vector<unsigned>(img.cols(), 0))
 	{}
 
 	const img::Image<img::Type::GRAYSCALE>& detect(float threshold)
@@ -19,9 +20,13 @@ public:
 	}
 
 private:
+	// input image
 	img::Image<img::Type::GRAYSCALE> m_output;
+	// resulting image
 	const img::Image<img::Type::GRAYSCALE>& m_img;
+	// characteristic function
 	std::vector<std::vector<unsigned>> m_mi;
+	// shades of gray
 	const int L = 256;
 	std::mutex m_mutex;
 
@@ -33,7 +38,7 @@ private:
 				unsigned s =0;
 				for (int x = -1; x <= 1; x++) {
 					for (int y = -1; y <= 1; y++) {
-						s+=std::abs(m_output(i,j)-m_output(i+x,j+y));
+						s += std::abs(m_output(i,j)-m_output(i+x,j+y));
 					}
 				}
 				m_mi[i][j] = 1000*s/(s+(L-1));
@@ -45,6 +50,7 @@ private:
 		maxm = std::max(maxm, maxm_tmp);
 	}
 
+	// calculate characteristic function and return its maximum value
 	unsigned update()
 	{
 		unsigned maxm = 0;
@@ -71,7 +77,6 @@ private:
 
 img::Image<img::Type::GRAYSCALE> fuzzy_edge_detection(const img::Image<img::Type::GRAYSCALE>& img, float threshold)
 {
-	fed f(img);
-	return f.detect(threshold);
+	return fed(img).detect(threshold);
 }
 

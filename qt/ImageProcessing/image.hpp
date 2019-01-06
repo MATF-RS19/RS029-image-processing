@@ -35,45 +35,44 @@ namespace img {
 	class Image {
 	private:
 		std::string m_name;
-        cv::Mat m_data;
+		cv::Mat m_data;
 
 		void gaussian_blur_help(Image<Type::GRAYSCALE>& output, const std::vector<float>& gauss, int from, int to) const;
 
 	public:
-        Image(const std::experimental::filesystem::path& path);
-        Image(unsigned rows = 0, unsigned cols = 0, Color c = Color::WHITE, std::string name = "");
+		Image(const std::experimental::filesystem::path& path);
+		Image(unsigned rows = 0, unsigned cols = 0, Color c = Color::WHITE, std::string name = "");
 		Image(const cv::Mat& data)
 			: m_name(), m_data(data)
-        {}
+		{}
 
-        Image(cv::Mat&& data)
-            : m_name(), m_data(std::move(data))
-        {}
+		Image(cv::Mat&& data)
+			: m_name(), m_data(std::move(data))
+		{}
 
-        Image(const Image& other)
-            : m_name(other.m_name), m_data(other.m_data.clone())
-        {}
+		Image(const Image& other)
+			: m_name(other.m_name), m_data(other.m_data.clone())
+		{}
 
-        // we need this because we have defined copy constructor
-        Image(Image&& other) = default;
-        Image& operator=(const Image& other) = default;
-        Image& operator=(Image&& other) = default;
+		// we need this because we have defined copy constructor
+		Image(Image&& other) = default;
+		Image& operator=(const Image& other) = default;
+		Image& operator=(Image&& other) = default;
 
-        std::string name() const
-        {
-            return m_name;
-        }
+		std::string name() const
+		{
+			return m_name;
+		}
 
-        std::string purename() const
-        {
-            return std::string(m_name.cbegin(),
-                               std::find(m_name.cbegin(), m_name.cend(), '.'));
-        }
+		std::string purename() const
+		{
+			return std::string(m_name.cbegin(), std::find(m_name.cbegin(), m_name.cend(), '.'));
+		}
 
-        void set_name(std::string name)
-        {
-            m_name = std::move(name);
-        }
+		void set_name(std::string name)
+		{
+			m_name = std::move(name);
+		}
 
 		unsigned pixels() const
 		{
@@ -85,7 +84,7 @@ namespace img {
 			return !m_data.empty();
 		}
 
-        void bgr2rgb();
+		void bgr2rgb();
 
 		void set_borders(int thickness = 1, Color c = img::BLACK)
 		{
@@ -121,24 +120,24 @@ namespace img {
 			}
 		}
 
-        uchar* data() const
-        {
-            return m_data.data;
-        }
+		uchar* data() const
+		{
+			return m_data.data;
+		}
 
-        img::Type type() const
-        {
-            return t;
-        }
+		img::Type type() const
+		{
+			return t;
+		}
 
-        int step() const
-        {
-            return m_data.step;
-        }
+		int step() const
+		{
+			return m_data.step;
+		}
 
 		bool in_range(int x, int y) const
 		{
-            return x >= 0 && x < rows() && y >= 0 && y < cols();
+			return x >= 0 && x < rows() && y >= 0 && y < cols();
 		}
 
 		std::pair<int, int> dimension() const
@@ -159,8 +158,8 @@ namespace img {
 
 		void save(const std::experimental::filesystem::path& path) const
 		{
-            if (!path.empty() && !m_data.empty())
-                imwrite(path.string(), m_data);
+			if (!path.empty() && !m_data.empty())
+				imwrite(path.string(), m_data);
 		}
 
 		void show() const
@@ -180,17 +179,17 @@ namespace img {
 			return cols()/(double)rows();
 		}
 
-        Image<t> resize(int width, int height) const
+		Image<t> resize(int width, int height) const
 		{
 			cv::Mat dst;
-            cv::resize(m_data, dst, cv::Size(width, height), 0, 0, cv::INTER_AREA);
-            return Image<t>(std::move(dst));
+			cv::resize(m_data, dst, cv::Size(width, height), 0, 0, cv::INTER_AREA);
+			return Image<t>(std::move(dst));
 		}
 
-        Image<t> resize(int width) const
-        {
-            return resize(width, width/get_aspect_ratio());
-        }
+		Image<t> resize(int width) const
+		{
+			return resize(width, width/get_aspect_ratio());
+		}
 
 
 		Image<t> resize(const Image& image) const
@@ -274,8 +273,7 @@ namespace img {
 		{
 			return m_data.begin<std::conditional_t<t==Type::RGB, cv::Vec3b, unsigned char>>() + i*cols();
 		}
-
-	};
+	}; // end of class image
 
 }; // end of namespace img
 #endif /* IMAGE_HPP */

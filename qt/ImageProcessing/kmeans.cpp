@@ -9,7 +9,7 @@ class kmeans {
 public:
 	kmeans(const img::Image<img::Type::RGB>& img, int k, int maxiter = 100)
 		: m_img(img), m_output(m_img.rows(), m_img.cols()), m_centroids(std::vector<vec3>(k)),
-        m_maxiter(maxiter)
+		m_maxiter(maxiter)
 	{}
 
 	const img::Image<img::Type::RGB>& cluster()
@@ -31,7 +31,6 @@ public:
 	}
 
 private:
-	std::mutex m_mutex;
 	// input image
 	const img::Image<img::Type::RGB>& m_img;
 	// resulting image
@@ -40,6 +39,7 @@ private:
 	std::vector<vec3> m_centroids;
 	// maximum number of iteration
 	int m_maxiter;
+	std::mutex m_mutex;
 
 	void avg_help(vec3& sum, int from, int to)
 	{
@@ -63,16 +63,16 @@ private:
 		vec3 centroid_tmp;
 
 		std::for_each(m_img[from], m_img[to], [&](auto&& pixel) {
-			vec3 p(pixel[0], pixel[1], pixel[2]);
-			auto it = std::min_element(m_centroids.begin(), m_centroids.begin()+i, [&p](auto&& a, auto&& b) { return (a-p).dot(a-p) < (b-p).dot(b-p); });
+				vec3 p(pixel[0], pixel[1], pixel[2]);
+				auto it = std::min_element(m_centroids.begin(), m_centroids.begin()+i, [&p](auto&& a, auto&& b) { return (a-p).dot(a-p) < (b-p).dot(b-p); });
 
-			int d = (p-*it).dot(p-*it);
+				int d = (p-*it).dot(p-*it);
 
-			if (d > maxd_tmp) {
-				centroid_tmp = p;
-				maxd_tmp = d;
-			}
-		});
+				if (d > maxd_tmp) {
+					centroid_tmp = p;
+					maxd_tmp = d;
+				}
+			});
 
 		std::lock_guard<std::mutex> lock(m_mutex);
 		if (maxd_tmp > maxd) {
@@ -87,7 +87,7 @@ private:
 		img::start_threads(0, m_img.rows(), &kmeans::set_centroid_help, this, i, maxd);
 	}
 
-	// update output, get new centroids and objective function value
+	// update output and get new centroids
 	void update_help(std::vector<vec3>& new_centroids, std::vector<int>& counter, int from, int to)
 	{
 		int k = m_centroids.size();
@@ -99,8 +99,8 @@ private:
 				vec3 p(m_img[x][y][0], m_img[x][y][1], m_img[x][y][2]);
 
 				int m = std::distance(m_centroids.begin(), 
-									std::min_element(m_centroids.begin(), m_centroids.end(), 
-									[&p](auto&& a, auto&& b) { return (a-p).dot(a-p) < (b-p).dot(b-p); })
+						std::min_element(m_centroids.begin(), m_centroids.end(), 
+							[&p](auto&& a, auto&& b) { return (a-p).dot(a-p) < (b-p).dot(b-p); })
 						);
 
 				m_output[x][y] = cv::Vec3b(m_centroids[m][0], m_centroids[m][1], m_centroids[m][2]);
@@ -122,7 +122,7 @@ private:
 		int k = m_centroids.size();
 		std::vector<vec3> new_centroids(k, vec3(0,0,0));
 		std::vector<int> counter(k, 0);
-		
+
 		img::start_threads(0, m_img.rows(), &kmeans::update_help, this, new_centroids, counter);
 
 		for (int j = 0; j < k; j++) {

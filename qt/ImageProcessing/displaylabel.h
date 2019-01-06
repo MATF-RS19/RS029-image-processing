@@ -9,19 +9,18 @@
 
 class displayLabel : public QLabel
 {
-    Q_OBJECT
+	Q_OBJECT
 
 public:
-    displayLabel(QWidget* parent = nullptr);
-
-    bool mouse_enabled;
+	displayLabel(QWidget* parent = nullptr);
+	bool mouse_enabled;
 protected:
-    void mousePressEvent(QMouseEvent* e);
-    void paintEvent(QPaintEvent* e);
+	void mousePressEvent(QMouseEvent* e);
+	void paintEvent(QPaintEvent* e);
 private:
-    QVector<QPoint> points;
+	QVector<QPoint> points;
 signals:
-    void sendPoints(QVector<QPoint>& v);
+	void sendPoints(QVector<QPoint>& v);
 };
 
 #endif // DISPLAYLABEL_H
