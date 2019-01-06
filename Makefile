@@ -3,6 +3,9 @@ CXXFLAGS = -std=c++17 -I include
 LDLIBS  = -lstdc++fs `pkg-config opencv --cflags --libs` -pthread
 WFLAGS = -Wall -Wextra -O3
 
+histogram: src/histogram.cpp image.o
+	$(CXX) -o $@ $^ $(CXXFLAGS) $(WFLAGS) $(LDLIBS) 
+
 binarization_fcm: src/binarization_fcm.cpp image.o 
 	$(CXX) -o $@ $^ $(CXXFLAGS) $(WFLAGS) $(LDLIBS) 
 
