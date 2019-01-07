@@ -135,7 +135,7 @@ void MainWindow::on_cannyButton_clicked()
 
 		im_transformed = std::move(im_canny);
 
-		ui->cannySlider->setValue(10);
+		ui->cannySlider->setValue(20);
 	}
 }
 
