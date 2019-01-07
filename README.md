@@ -35,16 +35,17 @@ image processing
 
 ## GUI consists of several buttons:
 
-* Open - open image
-
-* Save - save image after editing
-
-* Binarization - filter for turning image into black and white
-
-* Posterize - image is painted in selected number of colors using Fuzzy C means algorithm
-
-* Edge detection - edges of the objects represented in the image are highlited
-
-* Compression - PCA algorithm is used for image compression
-
-* Distortion - 4 points are selected (basically, object in the image which distortion is willing to be fixed), and another 4 points (basically, the position of new, fixed object). The result is image with fixed projective distortion.
+ ### Open 
+    open image
+ ### Save
+    save image after editing
+ ### Binarization
+    filter for turning image into black and white
+ ### Posterize 
+    image is painted in selected number of colors using K-means algorithm
+ ### Edge detection 
+    edges of the objects represented in the image are detected
+ ### Compression 
+    PCA algorithm is used for image compression
+ ### Distortion 
+    4 points are selected (basically, object in the image which distortion is willing to be fixed), and another 4 points (basically, the position of new, fixed object). The result is image with fixed projective distortion.
