@@ -1,6 +1,8 @@
 #include "image.hpp"
 using namespace img;
 
+#define MAX_COLOR_LEVEL 255
+
 template<>
 void Image<Type::RGB>::bgr2rgb()
 {
@@ -150,9 +152,24 @@ Image<Type::GRAYSCALE> Image<Type::GRAYSCALE>::negative() const
 
     for (int i = 0; i < rows(); i++) {
         for (int j = 0; j <  cols(); ++j) {
-            output(i, j) = 256 - 1 - (*this)(i, j); 
+            output(i, j) = MAX_COLOR_LEVEL - (*this)(i, j); 
         }
     }
 
 	return output;
+}
+
+template<>
+Image<Type::RGB> Image<Type::RGB>::negative() const
+{
+    Image<Type::RGB> output(rows(), cols());
+
+    for (int i = 0; i < rows(); i++) {
+        for (int j = 0; j <  cols(); ++j) {
+            cv::Vec3f BGR(MAX_COLOR_LEVEL - blue(i, j), MAX_COLOR_LEVEL - green(i, j), MAX_COLOR_LEVEL - red(i, j));
+            output(i, j) = BGR; 
+        }
+    }
+
+    return output;
 }

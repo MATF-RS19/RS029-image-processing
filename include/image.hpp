@@ -217,8 +217,8 @@ namespace img {
 		Image<Type::GRAYSCALE> grayscale() const;
 		Image<Type::GRAYSCALE> black_white() const;
 
-		Image<Type::GRAYSCALE> negative() const;
-
+		Image<t> negative() const;
+		
 		std::conditional_t<t==Type::RGB, cv::Vec3b, unsigned char>& operator()(unsigned i, unsigned j)
 		{
 			return m_data.at<std::conditional_t<t==Type::RGB, cv::Vec3b, unsigned char>>(i,j);
