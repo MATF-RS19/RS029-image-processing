@@ -14,7 +14,7 @@
 namespace img {
 
 	template <typename Function, typename... Args>
-	void start_threads(int start, int end, Function&& func, Args&&... args)
+	void start_threads(int start, int end, const Function& func, Args&&... args)
 	{
 		int num_threads = std::thread::hardware_concurrency();
 		std::vector<std::future<void>> threads(num_threads);
@@ -23,7 +23,7 @@ namespace img {
 			int from = std::max(rows/num_threads * i, start);
 			int to = (i==num_threads-1) ? rows : from + rows/num_threads;
 			// caution - from and to mustn't be captured with &
-			threads[i] = std::async([&,from,to]{ std::invoke(std::forward<Function>(func), std::forward<Args>(args)..., from, to); });
+			threads[i] = std::async([&,from,to]{ std::invoke(func, std::forward<Args>(args)..., from, to); });
 		}
 	}
 
