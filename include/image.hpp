@@ -218,6 +218,13 @@ namespace img {
 		Image<Type::GRAYSCALE> black_white() const;
 
 		Image<t> negative() const;
+
+		Image<Type::RGB> ycrcb2rgb() const;
+		Image<Type::RGB> rgb2ycrcb() const;
+		Image<Type::RGB> rgb2hsb() const;
+		Image<Type::RGB> rgb2hsi() const;
+		Image<Type::RGB> rgb2hsv() const;
+		Image<Type::RGB> hsv2rgb() const;
 		
 		std::conditional_t<t==Type::RGB, cv::Vec3b, unsigned char>& operator()(unsigned i, unsigned j)
 		{
