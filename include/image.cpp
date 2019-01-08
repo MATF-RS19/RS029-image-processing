@@ -2,6 +2,7 @@
 using namespace img;
 
 #define MAX_COLOR_LEVEL 255.0
+#define HALF_CIRCLE     180.0
 
 template<>
 void Image<Type::RGB>::bgr2rgb()
@@ -427,4 +428,22 @@ Image<Type::RGB> Image<Type::RGB>::hsv2rgb() const
     }
 
     return output;
+}
+
+template<>
+Image<Type::RGB> Image<Type::RGB>::color_complement() const
+{
+    Image<Type::RGB> output(rows(), cols());
+    output = rgb2hsv();
+
+    for (int i = 0; i < rows(); ++i) {
+        for (int j = 0; j < cols(); ++j) {
+            double H = output.blue(i,j);
+            H < HALF_CIRCLE ? H += HALF_CIRCLE : H -= HALF_CIRCLE;
+            cv::Vec3f HSVPixel(H, output.green(i,j), output.red(i,j)); 
+            output(i, j) = HSVPixel;
+        }
+    }
+
+    return output.hsv2rgb();
 }

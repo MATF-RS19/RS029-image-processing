@@ -226,6 +226,8 @@ namespace img {
 		Image<Type::RGB> rgb2hsv() const;
 		Image<Type::RGB> hsv2rgb() const;
 		
+		Image<Type::RGB> color_complement() const;
+
 		std::conditional_t<t==Type::RGB, cv::Vec3b, unsigned char>& operator()(unsigned i, unsigned j)
 		{
 			return m_data.at<std::conditional_t<t==Type::RGB, cv::Vec3b, unsigned char>>(i,j);
