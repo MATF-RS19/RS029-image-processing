@@ -489,3 +489,29 @@ std::vector<std::tuple<unsigned, unsigned, unsigned>> Image<Type::RGB>::channels
 
     return histogram;
 }
+
+template<>
+Image<Type::GRAYSCALE> Image<Type::GRAYSCALE>::adjust_contrast() const
+{
+    Image<Type::GRAYSCALE> output(rows(), cols());
+
+    unsigned max_level = *std::max_element((*this).cbegin(), (*this).cend());
+    unsigned min_level = *std::min_element((*this).cbegin(), (*this).cend());
+    unsigned diff = max_level - min_level;
+    unsigned current_pixel;
+    
+    for (int i = 0; i < rows(); ++i) {
+        for (int j = 0; j < cols(); ++j) {
+            current_pixel = (*this)(i, j);
+            
+            if (current_pixel == 0 or current_pixel == MAX_COLOR_LEVEL) {
+                output(i, j) = current_pixel;  
+            }
+            else {
+                output(i, j) = ((current_pixel - min_level) / double(diff)) * MAX_COLOR_LEVEL; 
+            }
+        }
+    }
+
+    return output;
+}
