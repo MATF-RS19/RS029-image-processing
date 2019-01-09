@@ -234,6 +234,7 @@ namespace img {
 		std::vector<std::tuple<unsigned, unsigned, unsigned>> channels_histogram() const;
 
 		Image<Type::GRAYSCALE> adjust_contrast() const;
+		Image<Type::GRAYSCALE> global_HE() const;
 
 		std::conditional_t<t==Type::RGB, cv::Vec3b, unsigned char>& operator()(unsigned i, unsigned j)
 		{

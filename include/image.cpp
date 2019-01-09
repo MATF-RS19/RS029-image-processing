@@ -503,13 +503,45 @@ Image<Type::GRAYSCALE> Image<Type::GRAYSCALE>::adjust_contrast() const
     for (int i = 0; i < rows(); ++i) {
         for (int j = 0; j < cols(); ++j) {
             current_pixel = (*this)(i, j);
-            
+            //  Edge cases: current_pixel = 0 and current_pixel = 255 ruin the forumula
             if (current_pixel == 0 or current_pixel == MAX_COLOR_LEVEL) {
                 output(i, j) = current_pixel;  
             }
             else {
                 output(i, j) = ((current_pixel - min_level) / double(diff)) * MAX_COLOR_LEVEL; 
             }
+        }
+    }
+
+    return output;
+}
+
+template<>
+Image<Type::GRAYSCALE> Image<Type::GRAYSCALE>::global_HE() const
+{
+    // "Histogram Equalization with Range Offset for Brightness Preserved Image Enhancement" 
+    // Haidi Ibrahim 
+    // http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.741.5816&rep=rep1&type=pdf
+
+    Image<Type::GRAYSCALE> output(rows(), cols());
+    std::vector<unsigned> hist = histogram();
+
+    // PDF - probabability that the pixel occurs in the image
+    std::vector<double> pdf;
+    pdf.reserve(hist.size());
+    std::transform( hist.cbegin(), hist.cend(),
+                    back_inserter(pdf), 
+                    [ *this ] (unsigned h) { return double(h) / (rows() * cols()); } 
+                );
+
+    // Cumulative distributive function
+    std::vector<double> cdf;
+    cdf.reserve(hist.size());
+    std::partial_sum(pdf.cbegin(), pdf.cend(), back_inserter(cdf));
+
+    for (int i = 0; i < rows(); ++i) {
+        for (int j = 0; j < cols(); ++j) {
+            output(i, j) = cdf[(*this)(i, j)] * MAX_COLOR_LEVEL;
         }
     }
 
