@@ -3,6 +3,7 @@ using namespace img;
 
 #define MAX_COLOR_LEVEL 255.0
 #define HALF_CIRCLE     180.0
+#define MAX_BINS        256
 
 template<>
 void Image<Type::RGB>::bgr2rgb()
@@ -446,4 +447,45 @@ Image<Type::RGB> Image<Type::RGB>::color_complement() const
     }
 
     return output.hsv2rgb();
+}
+
+template<>
+std::vector<unsigned> Image<Type::GRAYSCALE>::histogram() const
+{
+    std::vector<unsigned> histogram(MAX_BINS, 0);
+
+    for (int i = 0; i < rows(); i++) {
+        for (int j = 0; j <  cols(); ++j) {
+            histogram[(*this)(i, j)]++;
+        }
+    }
+
+    return histogram;
+}
+
+template<>
+std::vector<std::tuple<unsigned, unsigned, unsigned>> Image<Type::RGB>::channels_histogram() const
+{
+    std::vector<std::tuple<unsigned, unsigned, unsigned>> histogram;
+    histogram.reserve(MAX_BINS);
+
+    std::vector<unsigned> R_histogram(MAX_BINS, 0);
+    std::vector<unsigned> G_histogram(MAX_BINS, 0);
+    std::vector<unsigned> B_histogram(MAX_BINS, 0);
+    
+    for (int i = 0; i < rows(); ++i) {
+        for (int j = 0; j < cols(); ++j) {
+            R_histogram[red(i, j)]++;
+            G_histogram[green(i, j)]++;
+            B_histogram[blue(i, j)]++;
+        }
+    }
+
+    for (int i = 0; i < MAX_BINS; ++i) {
+        histogram.emplace_back(std::make_tuple( R_histogram[i], 
+                                                G_histogram[i], 
+                                                B_histogram[i] ));
+    }
+
+    return histogram;
 }

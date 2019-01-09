@@ -227,6 +227,11 @@ namespace img {
 		Image<Type::RGB> hsv2rgb() const;
 		
 		Image<Type::RGB> color_complement() const;
+		
+		// grayscale image
+		std::vector<unsigned> histogram() const;
+		// 3-channel image
+		std::vector<std::tuple<unsigned, unsigned, unsigned>> channels_histogram() const;
 
 		std::conditional_t<t==Type::RGB, cv::Vec3b, unsigned char>& operator()(unsigned i, unsigned j)
 		{
