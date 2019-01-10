@@ -15,17 +15,20 @@ int main()
     for (int i = 0; i < rows; i++) {
         for (int j = 0; j <  columns; ++j) {
             double mean = (max_gray + img(i, j)) / 2;
-            double var = (pow((max_gray - mean), 2) + pow((img(i, j) - mean), 2)) / 2;
+            double var = (pow((max_gray - mean), 2) + pow((img(i, j) - mean), 2)) / 2.0;
             
-            double mem_func = exp(-(pow(max_gray - img(i, j) / var, 2), 2) / 2);
+            // fuzzification
+            double mem_func = exp(-(pow(max_gray - img(i, j) / var, 2), 2) / 2.0);
             
-            if (mem_func <= 0.5) {
+            // modification of membership function by INT operator
+            if (mem_func <= 0.5 and mem_func > 0) {
                 mem_func = 2 * pow(mem_func, 2);
             }
-            else if (mem_func <= 1) {
+            else if (mem_func <= 1 and mem_func > 0.5) {
                 mem_func = 1 - 2 * pow(1 - mem_func, 2);
             }
 
+            // defuzzification
             output(i, j) = max_gray - var * sqrt(-2.0 * log(mem_func));
         }
     }
