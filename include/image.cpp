@@ -493,6 +493,8 @@ std::vector<std::tuple<unsigned, unsigned, unsigned>> Image<Type::RGB>::channels
 template<>
 Image<Type::GRAYSCALE> Image<Type::GRAYSCALE>::adjust_contrast() const
 {
+    // Histogram stretching technique with appropriate treatment for edge cases.
+
     Image<Type::GRAYSCALE> output(rows(), cols());
 
     unsigned max_level = *std::max_element((*this).cbegin(), (*this).cend());
@@ -521,8 +523,8 @@ Image<Type::GRAYSCALE> Image<Type::GRAYSCALE>::global_HE() const
 {
     // "Histogram Equalization with Range Offset for Brightness Preserved Image Enhancement" 
     // Haidi Ibrahim 
-    // http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.741.5816&rep=rep1&type=pdf
-
+    // International Journal of Image Processing (IJIP), Volume (5) : Issue (5) : 2011 
+    
     Image<Type::GRAYSCALE> output(rows(), cols());
     std::vector<unsigned> hist = histogram();
 
@@ -545,5 +547,73 @@ Image<Type::GRAYSCALE> Image<Type::GRAYSCALE>::global_HE() const
         }
     }
 
+    return output;
+}
+
+template<>
+Image<Type::GRAYSCALE> Image<Type::GRAYSCALE>::HE_brightness() const
+{
+    // "Histogram Equalization with Range Offset for Brightness Preserved Image Enhancement" 
+    // Haidi Ibrahim
+    // International Journal of Image Processing (IJIP), Volume (5) : Issue (5) : 2011 
+    
+    Image<Type::GRAYSCALE> output(rows(), cols());
+    // Stage 1 - GHE
+    output = global_HE();
+
+    // Stage 2 - Restore brightness
+    std::vector<unsigned> hist = histogram();
+    // The total brightness value of the input image
+    long long input_B = 0;
+    // The total brightness value of the output image
+    long long output_B = 0;
+    
+    for (int i = 0; i < rows(); ++i) {
+        for (int j = 0; j < cols(); ++j) {
+            input_B += (*this)(i, j) * hist[(*this)(i, j)];
+            output_B += hist[output(i, j)] * output(i, j);
+        }
+    }
+    int delta_B = (output_B < input_B) ? -1 : 1;
+    
+    int delta_C = 0;
+    int offset = 0;
+    long long new_output_B;
+    
+    if (delta_B > 0) { // The output image will be darker.
+        while (delta_C >= 0) {
+            new_output_B = 0;
+            for (int i = 0; i < rows(); ++i) {
+                for (int j = 0; j < cols(); ++j) {
+                    new_output_B += (output(i, j) + offset) * hist[output(i, j)];
+                }
+            }
+            input_B < new_output_B ? delta_C = -1 : delta_C = 1; 
+            --offset;
+        }
+    }
+    else { // The output image will be brighter.
+        while (delta_C <= 0) {
+            new_output_B = 0;
+            for (int i = 0; i < rows(); ++i) {
+                for (int j = 0; j < cols(); ++j) {
+                    new_output_B += (output(i, j) + offset) * hist[output(i, j)];
+                }
+            }
+            input_B < new_output_B ? delta_C = -1 : delta_C = 1; 
+            ++offset;
+        }
+    }
+    
+    for (int i = 0; i < rows(); ++i) {
+        for (int j = 0; j < cols(); ++j) {
+            int final_value = output(i, j) + offset;
+
+            if (final_value > MAX_COLOR_LEVEL) output(i, j) = MAX_COLOR_LEVEL;
+            else if (final_value < 0) output(i, j) = 0;
+            else output(i, j) = final_value;
+        }
+    }
+    
     return output;
 }

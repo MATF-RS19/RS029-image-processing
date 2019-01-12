@@ -235,6 +235,7 @@ namespace img {
 
 		Image<Type::GRAYSCALE> adjust_contrast() const;
 		Image<Type::GRAYSCALE> global_HE() const;
+		Image<Type::GRAYSCALE> HE_brightness() const;
 
 		std::conditional_t<t==Type::RGB, cv::Vec3b, unsigned char>& operator()(unsigned i, unsigned j)
 		{
