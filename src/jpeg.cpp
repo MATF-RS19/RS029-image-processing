@@ -10,12 +10,12 @@
 int main()
 {
         
-        img::Image<img::Type::GRAYSCALE> img("images/woman.jpeg");
+        img::Image<img::Type::GRAYSCALE> img("images/tree.jpg");
         int rows = img.rows();
         int columns = img.cols();
         img::Image<img::Type::GRAYSCALE> output(rows, columns);
         
-        output = img.fuzzy_grayscale_contrast_basic();
+        output = img.mean_adjust(56);
         output.save("hsi.jpg");
 
         //output = img.rgb2ycrcb();

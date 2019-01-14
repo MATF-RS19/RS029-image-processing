@@ -240,6 +240,8 @@ namespace img {
 		Image<Type::GRAYSCALE> fuzzy_grayscale_contrast() const;
 		Image<Type::GRAYSCALE> fuzzy_grayscale_contrast_basic() const;
 
+		Image<Type::GRAYSCALE> mean_adjust(int) const;
+
 		std::conditional_t<t==Type::RGB, cv::Vec3b, unsigned char>& operator()(unsigned i, unsigned j)
 		{
 			return m_data.at<std::conditional_t<t==Type::RGB, cv::Vec3b, unsigned char>>(i,j);

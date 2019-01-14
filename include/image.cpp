@@ -4,7 +4,7 @@ using namespace img;
 #define MAX_COLOR_LEVEL 255.0
 #define HALF_CIRCLE     180.0
 #define MAX_BINS        256
-#define NUM_CHANNELS 3
+#define NUM_CHANNELS    3
 
 template<>
 void Image<Type::RGB>::bgr2rgb()
@@ -718,5 +718,27 @@ Image<Type::GRAYSCALE> Image<Type::GRAYSCALE>::fuzzy_grayscale_contrast_basic() 
         }
     }
     
+    return output;
+}
+
+template<>
+Image<Type::GRAYSCALE> Image<Type::GRAYSCALE>::mean_adjust(int offset) const
+{
+    img::Image<img::Type::GRAYSCALE> output(rows(), cols());
+
+    double mean = std::accumulate((*this).cbegin(), (*this).cend(), 0) / (rows() * cols());
+    
+    for (int i = 0; i < rows(); i++) {
+        for (int j = 0; j <  cols(); ++j) {
+            if (abs((*this)(i, j) - mean) < offset) {
+                unsigned adjustment = (*this)(i, j) + offset * 2;
+                adjustment > MAX_COLOR_LEVEL ? output(i, j) = MAX_COLOR_LEVEL : output(i, j) = adjustment;
+            }
+            else {
+                output(i, j) = (*this)(i, j);
+            }
+        }
+    }
+
     return output;
 }
