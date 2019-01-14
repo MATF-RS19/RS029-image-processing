@@ -651,3 +651,72 @@ Image<Type::RGB> Image<Type::RGB>::fuzzy_color_contrast() const
 
     return output;
 }
+
+template<>
+Image<Type::GRAYSCALE> Image<Type::GRAYSCALE>::fuzzy_grayscale_contrast() const
+{
+    // "Image Enhancement Using Fuzzy Technique"
+    // Tarun Mahashwari, Amit Asthana
+    //NTERNATIONAL JOURNAL OF RESEARCH REVIEW IN ENGINEERING SCIENCE & TECHNOLOGY VOLUME-2, ISSUE-2, JUNE-2013
+    
+    img::Image<img::Type::GRAYSCALE> output(rows(), cols());
+
+    unsigned max_gray = *std::max_element((*this).begin(), (*this).end());
+    
+    for (int i = 0; i < rows(); i++) {
+        for (int j = 0; j <  cols(); ++j) {
+            double mean = (max_gray + (*this)(i, j)) / 2;
+            double var = (pow((max_gray - mean), 2) + pow(((*this)(i, j) - mean), 2)) / 2.0;
+            
+            // fuzzification
+            double mem_func = exp(-(pow(max_gray - (*this)(i, j) / var, 2), 2) / 2.0);
+            
+            // modification of membership function by INT operator
+            if (mem_func <= 0.5 and mem_func > 0) {
+                mem_func = 2 * pow(mem_func, 2);
+            }
+            else if (mem_func <= 1 and mem_func > 0.5) {
+                mem_func = 1 - 2 * pow(1 - mem_func, 2);
+            }
+
+            // defuzzification
+            output(i, j) = max_gray - var * sqrt(-2.0 * log(mem_func));
+        }
+    }
+
+    return output;
+}
+
+template<>
+Image<Type::GRAYSCALE> Image<Type::GRAYSCALE>::fuzzy_grayscale_contrast_basic() const
+{
+    // "Fuzzy based Low Contrast Image Enhancement Technique by using Pal and King Method"
+    // Ajay Kumar Gupta, Siddharth Singh Chauhan, Manish Shrivastava
+    // International Journal of Computer Applications Volume 141 – No.6, May 2016
+    
+    img::Image<img::Type::GRAYSCALE> output(rows(), cols());
+
+    unsigned min_gray = *std::min_element((*this).cbegin(), (*this).cend());
+    unsigned max_gray = *std::max_element((*this).cbegin(), (*this).cend());
+    unsigned diff = max_gray - min_gray;
+
+    for (int i = 0; i < rows(); i++) {
+        for (int j = 0; j <  cols(); ++j) {
+            // fuzzification
+            double mem_func = ((*this)(i, j) - min_gray) / double(diff);
+            
+            // modification of membership function by INT operator
+            if (mem_func <= 0.5 and mem_func > 0) {
+                mem_func = 2 * pow(mem_func, 2);
+            }
+            else if (mem_func <= 1 and mem_func > 0.5) {
+                mem_func = 1 - 2 * pow(1 - mem_func, 2);
+            }
+
+            // defuzzification
+            output(i, j) = min_gray + mem_func * diff; 
+        }
+    }
+    
+    return output;
+}
