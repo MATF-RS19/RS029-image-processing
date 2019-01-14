@@ -4,6 +4,7 @@ using namespace img;
 #define MAX_COLOR_LEVEL 255.0
 #define HALF_CIRCLE     180.0
 #define MAX_BINS        256
+#define NUM_CHANNELS 3
 
 template<>
 void Image<Type::RGB>::bgr2rgb()
@@ -249,62 +250,16 @@ Image<Type::RGB> Image<Type::RGB>::rgb2hsi() const
                 unsigned min_RGB = std::distance(RGB.cbegin(), std::min_element(RGB.cbegin(), RGB.cend()));
                 unsigned R_B = red(i, j) - blue(i, j);
                 unsigned R_G = red(i, j) - green(i, j);
-                unsigned H, S, I;
+                double H, S, I;
 
                 unsigned sum_pixel = pixel_sum(i, j);
 
                 H = 1 / ((0.5 * R_G + R_B) / sqrt(R_G * R_G + R_B * R_G));
-                S = 1 - 3 * min_RGB / sum_pixel;
-                I = sum_pixel / 3;
+                S = 1 - 3.0 * min_RGB / sum_pixel;
+                I = sum_pixel / 3.0;
 
                 cv::Vec3f HSIPixel(H, S, I);
                 output(i,j) = HSIPixel;
-            }
-    }
-
-    return output;
-}
-
-template<>
-Image<Type::RGB> Image<Type::RGB>::rgb2hsb() const
-{
-    Image<Type::RGB> output(rows(), cols());
-
-    for (int i = 0; i < rows(); ++i) {
-            for (int j = 0; j < cols(); ++j) {
-                std::vector<unsigned> RGB {red(i, j), green(i, j), blue(i, j)};
-                unsigned max_RGB = std::distance(RGB.cbegin(), std::max_element(RGB.cbegin(), RGB.cend()));
-                unsigned min_RGB = std::distance(RGB.cbegin(), std::min_element(RGB.cbegin(), RGB.cend()));
-                int delta = RGB[max_RGB] - RGB[min_RGB];
-                double H, S, B;
-                
-                if (delta < 0) {
-                    H = 0;
-                    S = 0;
-                    B = 0;
-                }
-                else {
-                    double R1 = (RGB[max_RGB] - red(i, j)) / delta;
-                    double G1 = (RGB[max_RGB] - green(i, j)) / delta;
-                    double B1 = (RGB[max_RGB] - blue(i, j)) / delta;
-
-                    if (max_RGB == 0) {
-                        H = B1 - G1;  
-                    }
-                    else if (max_RGB == 1) {
-                        H = R1 - B1 + 2.0;
-                    }
-                    else {
-                            H = G1 - R1 + 4.0;
-                    }
-                    if (H < 0) {
-                            H = H / 6 + 1.0;
-                    }
-                    S = RGB[max_RGB] / delta;
-                    B = RGB[max_RGB] / MAX_COLOR_LEVEL;
-                    cv::Vec3f HSBPixel(H, S, B);
-                    output(i,j) = HSBPixel;
-                }
             }
     }
 
@@ -615,5 +570,84 @@ Image<Type::GRAYSCALE> Image<Type::GRAYSCALE>::HE_brightness() const
         }
     }
     
+    return output;
+}
+
+template<>
+Image<Type::RGB> Image<Type::RGB>::fuzzy_color_contrast() const
+{
+    // "A Highly Efficient Color Image Contrast Enhancement using Fuzzy Based Contrast Intensification Operator"
+    // Pooja Mishra, Khom Lal Sinha
+    // Advanced Research in Electrical and Electronic Engineering; Volume 1, Number 4 (2014)
+
+    img::Image<img::Type::RGB> output(rows(), cols());
+
+    unsigned max_R, min_R;
+    unsigned max_G, min_G;
+    unsigned max_B, min_B;
+    unsigned R, G, B;
+    
+    max_R = min_R = red(0, 0);
+    max_G = min_G = green(0, 0);
+    max_B = min_B = blue(0, 0);
+        
+    for (int i = 1; i < rows(); i++) {
+        for (int j = 1; j <  cols(); ++j) {
+            R = red(i, j);
+            G = green(i, j);
+            B = blue(i, j);
+
+            if (max_R < R) max_R = R;
+            else if (min_R > R) min_R = R;
+        
+            if (max_G < G) max_G = G;
+            else if (min_G > G) min_G = G;
+
+            if (max_B < B) max_B = B;
+            else if (min_B > B) min_B = B;
+            }
+    }
+ 
+    std::vector<unsigned> max_RGB {max_R, max_G, max_B};
+    std::vector<double> mid_RGB {(max_R - min_R) / 2.0, (max_G - min_G) / 2.0, (max_B - min_B) / 2.0};
+    
+    std::vector<unsigned> RGB;
+    RGB.reserve(3);
+    std::vector<unsigned> curr_RGB;
+    curr_RGB.reserve(3);
+
+    double Fe = 2.0;
+    double Fd;
+
+    for (int i = 0; i < rows(); i++) {
+        for (int j = 0; j < cols(); ++j) {
+            curr_RGB.resize(0);
+            curr_RGB.push_back(red(i, j)); 
+            curr_RGB.push_back(green(i, j));
+            curr_RGB.push_back(blue(i, j));
+            RGB.resize(0);
+
+            for (int c = 0; c < NUM_CHANNELS; ++c) {
+                Fd = (max_RGB[c] - mid_RGB[c]) / 0.41421356237309515;
+                // fuzzification
+                double mem_func = pow(1 + (max_RGB[c] - curr_RGB[c]) / Fd, -Fe);
+                
+                // modification of membership function by INT operator
+                if (mem_func <= 0.5 and mem_func > 0) {
+                    mem_func = 2 * pow(mem_func, 2);
+                }
+                else if (mem_func <= 1 and mem_func > 0.5) {
+                    mem_func = 1 - 2 * pow(1 - mem_func, 2);
+                }
+
+                // defuzzification
+                RGB.push_back(max_RGB[c] - Fd * (pow(mem_func, -1 / Fe)) + Fd);
+            }
+            
+            cv::Vec3f BGR(RGB[2], RGB[1], RGB[0]);
+            output(i, j) = BGR;
+        }
+    }
+
     return output;
 }

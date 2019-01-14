@@ -221,7 +221,6 @@ namespace img {
 
 		Image<Type::RGB> ycrcb2rgb() const;
 		Image<Type::RGB> rgb2ycrcb() const;
-		Image<Type::RGB> rgb2hsb() const;
 		Image<Type::RGB> rgb2hsi() const;
 		Image<Type::RGB> rgb2hsv() const;
 		Image<Type::RGB> hsv2rgb() const;
@@ -236,6 +235,8 @@ namespace img {
 		Image<Type::GRAYSCALE> adjust_contrast() const;
 		Image<Type::GRAYSCALE> global_HE() const;
 		Image<Type::GRAYSCALE> HE_brightness() const;
+
+		Image<Type::RGB> fuzzy_color_contrast() const;
 
 		std::conditional_t<t==Type::RGB, cv::Vec3b, unsigned char>& operator()(unsigned i, unsigned j)
 		{
